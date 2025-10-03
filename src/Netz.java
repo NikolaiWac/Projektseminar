@@ -1,5 +1,8 @@
+import java.util.ArrayList;
+
 public class Netz {
+    ArrayList<Schicht> schichten;
     public static void main(String[] args) {
-        System.out.println("Hello Wold");
+        //Hier input
     }
 }
