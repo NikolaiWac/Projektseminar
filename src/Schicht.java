@@ -6,6 +6,7 @@ public class Schicht {
     //Initialisiert die gewünschte anzahl an Neuronen
     //Anzahl kommt aus input Netz-Klasse
     public Schicht(int anzNeuron) {
+        neuronen = new ArrayList<>();
         for (int i = 0; i < anzNeuron; i++) {
             neuronen.add(new Neuron(0));
         }

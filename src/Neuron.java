@@ -5,6 +5,7 @@ public class Neuron {
     ArrayList<Double> weights;
     public Neuron(int aktFkt){
         this.aktFkt = aktFkt;
+        weights = new ArrayList<>();
     }
 
     //Das ist wahrscheinlich temp bis wir mit dem eigentlichen
