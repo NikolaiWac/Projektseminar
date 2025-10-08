@@ -62,7 +62,8 @@ public class Netz {
             try {
                 int v = Integer.parseInt(sc.nextLine().trim());
                 if (v > 0) return v;
-            } catch (Exception ignored) { }
+            } catch (Exception ignored) {
+            }
             System.out.println("Bitte eine ganze Zahl > 0 eingeben:");
         }
     }
@@ -72,7 +73,8 @@ public class Netz {
             try {
                 int v = Integer.parseInt(sc.nextLine().trim());
                 if (v >= 0) return v;
-            } catch (Exception ignored) { }
+            } catch (Exception ignored) {
+            }
             System.out.println("Bitte eine ganze Zahl >= 0 eingeben:");
         }
     }
@@ -85,5 +87,14 @@ public class Netz {
                 System.out.println("Bitte eine gültige Zahl eingeben:");
             }
         }
+    }
+
+    //setNeuron Funktionen aktuell ohne Fehlermeldungen
+    public void setNeuronFkt(int layer, int pos, int fkt) {
+        schichten.get(layer).getNeuron(pos).setAktFkt(fkt);
+    }
+
+    public void setNeuronWeights(int layer, int pos, int inputPos, double weight) {
+        schichten.get(layer).getNeuron(pos).setWeights(inputPos, weight);
     }
 }
