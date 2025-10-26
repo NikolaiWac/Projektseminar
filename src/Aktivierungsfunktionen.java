@@ -11,12 +11,12 @@ public class Aktivierungsfunktionen {
         }
     }
 
-    //0
+    //Gibt den Eingabewert zurück
     public static double identitaetsFunktion(double x) {
         return x;
     }
 
-    //1
+    //Step Funktion macht einen Step bei StepXPos, also für x kleiner StepXPos -1, für x größer StepXPos 1, also StepXPos gibt an welche Step Funktion es ist
     public static double stepFunktion(double x, double stepXPos) {
         if (x < stepXPos) {
             return -1.0;
@@ -25,7 +25,7 @@ public class Aktivierungsfunktionen {
         }
     }
 
-    //2
+    //
     public static double sigmoidFunktion(double x) {
         return 1.0 / (1.0 + Math.exp(-x));
     }
