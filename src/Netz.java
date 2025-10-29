@@ -3,16 +3,18 @@ import java.util.Scanner;
 
 public class Netz {
     // Liste der Schichten des Netzes
+    private int firstLayerNeurons;
     private ArrayList<Schicht> schichten = new ArrayList<>();
     private ArrayList<Double> input;
 
     // Konstruktor: Erstellt für jede übergebene Zahl eine Schicht außer für erste Schicht
     // mit entsprechend vielen Neuronen
     // aktuell alle Schichten erstellt bis auf die erste, Neuronen in der jeweiligen Schicht kriegen direkt anzahl an inputs
-    public Netz( int... anzahlNeuronenProSchicht) {
+    public Netz(int... anzahlNeuronenProSchicht) {
         if (anzahlNeuronenProSchicht != null) {
-            for (int  i = 1; i < anzahlNeuronenProSchicht.length; i++) {
-                schichten.add(new Schicht(anzahlNeuronenProSchicht[i], anzahlNeuronenProSchicht[i-1]));
+            firstLayerNeurons = anzahlNeuronenProSchicht[0];
+            for (int i = 1; i < anzahlNeuronenProSchicht.length; i++) {
+                schichten.add(new Schicht(anzahlNeuronenProSchicht[i], anzahlNeuronenProSchicht[i - 1]));
             }
         }
     }
@@ -22,7 +24,7 @@ public class Netz {
     public void init(ArrayList<Double> input) {
         if (input != null) {
             this.input = input;
-            schichten.addFirst(new Schicht(schichten.getFirst().getNeuronen().getFirst().getWeights().size(), input.size()));
+            schichten.addFirst(new Schicht(firstLayerNeurons, input.size()));
         }
     }
 

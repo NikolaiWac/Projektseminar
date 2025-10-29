@@ -38,7 +38,7 @@ public class Neuron {
     //Das ist wahrscheinlich temp bis wir mit dem eigentlichen
     //lernen anfangen
     public void asignrandomWeights() {
-        for (int i = 0; i <= inputNum; i++) {
+        for (int i = 0; i < inputNum; i++) {
             weights.add(Math.random());
         }
     }

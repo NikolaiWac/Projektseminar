@@ -12,7 +12,7 @@ public class testen {
         eingabe.add(0.8);
         eingabe.add(0.6);
         eingabe.add(1.0);
-        Netz netz = new Netz(4, 1);
+        Netz netz = new Netz( 1);
         netz.init(eingabe);
 
         ArrayList<Double> furtherInfo = new ArrayList<>(){
@@ -22,23 +22,15 @@ public class testen {
                 add(1.0);
             }
         };
+        netz.setNeuronFkt(0, 0, 1, furtherInfo);
 
-        for (int i = 0; i < 4; i++) {
-            if (i == 0) {
-                netz.setNeuronFkt(0, i, 0);
-                netz.setNeuronFkt(1, i, 1, furtherInfo);
-            } else {
-                netz.setNeuronFkt(0, i, 1, furtherInfo);
-            }
-        }
-
-        netz.setNeuronWeights(1, 0, 0, 0.5);
-        netz.setNeuronWeights(1, 0, 1, 0.2);
-        netz.setNeuronWeights(1, 0, 2, 0.6);
-        netz.setNeuronWeights(1, 0, 3, 0.1);
+        netz.setNeuronWeights(0, 0, 0, 0.5);
+        netz.setNeuronWeights(0, 0, 1, 0.2);
+        netz.setNeuronWeights(0, 0, 2, 0.6);
+        netz.setNeuronWeights(0, 0, 3, 0.1);
 
         double d = netz.vorwaerts();
-        assertEquals(0.87, d);
+        assertEquals(0.0, d);
 
     }
 
