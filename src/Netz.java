@@ -102,6 +102,11 @@ public class Netz {
         schichten.get(layer).getNeuron(pos).setAktFkt(fkt);
     }
 
+    public void setNeuronFkt(int layer, int pos, int fkt, ArrayList<Double> furtherInfo) {
+        schichten.get(layer).getNeuron(pos).setAktFkt(fkt, furtherInfo);
+    }
+
+
     public void setNeuronWeights(int layer, int pos, int inputPos, double weight) {
         schichten.get(layer).getNeuron(pos).setWeights(inputPos, weight);
     }

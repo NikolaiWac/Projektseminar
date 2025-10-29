@@ -15,12 +15,20 @@ public class testen {
         Netz netz = new Netz(4, 1);
         netz.init(eingabe);
 
+        ArrayList<Double> furtherInfo = new ArrayList<>(){
+            {
+                add(1.0);
+                add(0.0);
+                add(1.0);
+            }
+        };
+
         for (int i = 0; i < 4; i++) {
             if (i == 0) {
                 netz.setNeuronFkt(0, i, 0);
-                netz.setNeuronFkt(1, i, 1);
+                netz.setNeuronFkt(1, i, 1, furtherInfo);
             } else {
-                netz.setNeuronFkt(0, i, 1);
+                netz.setNeuronFkt(0, i, 1, furtherInfo);
             }
         }
 

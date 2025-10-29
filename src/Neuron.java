@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 
 public class Neuron {
+    ArrayList<Double> furtherFktInfo;
     int aktFkt;
     ArrayList<Double> weights;
     int inputNum;
@@ -11,6 +12,11 @@ public class Neuron {
 
     public void setAktFkt(int aktFkt) {
         this.aktFkt = aktFkt;
+    }
+
+    public void setAktFkt(int aktFkt,  ArrayList<Double> furtherInfo) {
+        this.aktFkt = aktFkt;
+        furtherFktInfo = furtherInfo;
     }
 
     public ArrayList<Double> getWeights() {
@@ -47,6 +53,6 @@ public class Neuron {
             sum += input.get(j) * weights.get(j);
         }
         sum += bias;
-        return Aktivierungsfunktionen.funktionSelect(sum, aktFkt);
+        return Aktivierungsfunktionen.funktionSelect(sum, aktFkt, furtherFktInfo);
     }
 }
