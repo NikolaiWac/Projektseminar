@@ -3,25 +3,35 @@ import java.util.Scanner;
 
 public class Netz {
     // Liste der Schichten des Netzes
-    private final ArrayList<Schicht> schichten = new ArrayList<>();
+    private int firstLayerNeurons;
+    private ArrayList<Schicht> schichten = new ArrayList<>();
+    private ArrayList<Double> input;
 
-    // Konstruktor: Erstellt für jede übergebene Zahl eine Schicht
+    // Konstruktor: Erstellt für jede übergebene Zahl eine Schicht außer für erste Schicht
     // mit entsprechend vielen Neuronen
+    // aktuell alle Schichten erstellt bis auf die erste, Neuronen in der jeweiligen Schicht kriegen direkt anzahl an inputs
     public Netz(int... anzahlNeuronenProSchicht) {
         if (anzahlNeuronenProSchicht != null) {
-            for (int anz : anzahlNeuronenProSchicht) {
-                schichten.add(new Schicht(anz));
+            firstLayerNeurons = anzahlNeuronenProSchicht[0];
+            for (int i = 1; i < anzahlNeuronenProSchicht.length; i++) {
+                schichten.add(new Schicht(anzahlNeuronenProSchicht[i], anzahlNeuronenProSchicht[i - 1]));
             }
+        }
+    }
+
+    //hier wird der input fürs netz übergeben, erst jetzt kann das netzt genutzt werden
+    //erste Schicht wird erst hier erzeugt, denn erst hier klar wieviele inputs die erste Schicht bekommt
+    public void init(ArrayList<Double> input) {
+        if (input != null) {
+            this.input = input;
+            schichten.addFirst(new Schicht(firstLayerNeurons, input.size()));
         }
     }
 
     // Durchläuft das Netzwerk: Input -> Eingaben als Liste
     // Output -> Ausgabe als Double
-    public double vorwaerts(ArrayList<Double> eingabe) {
-        if (eingabe == null) {
-            throw new IllegalArgumentException("Eingabe darf nicht null sein");
-        }
-        ArrayList<Double> aktuelleEingabe = new ArrayList<>(eingabe);
+    public double vorwaerts() {
+        ArrayList<Double> aktuelleEingabe = new ArrayList<>(input);
 
         for (Schicht schicht : schichten) {
             double summe = schicht.schichtSum(aktuelleEingabe);
@@ -32,7 +42,7 @@ public class Netz {
         return aktuelleEingabe.getFirst();
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         System.out.println("Anzahl der Schichten eingeben (>= 2):");
         int anzahlSchichten = readPositiveInt(sc);
@@ -55,7 +65,7 @@ public class Netz {
         double output = netz.vorwaerts(input);
         System.out.println("Netz-Output: " + output);
 
-    }
+    }*/
 
     private static int readPositiveInt(Scanner sc) {
         while (true) {
@@ -93,6 +103,11 @@ public class Netz {
     public void setNeuronFkt(int layer, int pos, int fkt) {
         schichten.get(layer).getNeuron(pos).setAktFkt(fkt);
     }
+
+    public void setNeuronFkt(int layer, int pos, int fkt, ArrayList<Double> furtherInfo) {
+        schichten.get(layer).getNeuron(pos).setAktFkt(fkt, furtherInfo);
+    }
+
 
     public void setNeuronWeights(int layer, int pos, int inputPos, double weight) {
         schichten.get(layer).getNeuron(pos).setWeights(inputPos, weight);

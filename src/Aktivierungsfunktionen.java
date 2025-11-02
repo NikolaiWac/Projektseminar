@@ -1,31 +1,47 @@
+import java.util.ArrayList;
+
 public class Aktivierungsfunktionen {
-    public static double funktionSelect(double x, int aktFkt) {
+
+    //für funktionen die mehr infos brauchen um zu funktionieren, einfache funktionen sollten trotzdem noch funktionieren
+    public static double funktionSelect(double x, int aktFkt, ArrayList<Double> furtherInfo) {
         if (aktFkt == 0) {
             return identitaetsFunktion(x);
         } else if (aktFkt == 1) {
-            //Weiß nicht genau wie die step Pos ausgewählt werden soll
-            //Temporär
-            return stepFunktion(x, 0);
+            if (furtherInfo != null) {
+                return stepFunktion(x, furtherInfo.get(0), furtherInfo.get(1), furtherInfo.get(2));
+            }
+            else {
+                return stepFunktion(x);
+            }
         } else {
             return sigmoidFunktion(x);
         }
     }
 
-    //0
+    //Gibt den Eingabewert zurück
     public static double identitaetsFunktion(double x) {
         return x;
     }
 
-    //1
-    public static double stepFunktion(double x, double stepXPos) {
-        if (x < stepXPos) {
-            return -1.0;
+    //vordefinierte Step Funktion mit hardcoded values
+    public static double stepFunktion(double x) {
+        if (x < 1) {
+            return 0.0;
         } else {
             return 1.0;
         }
     }
 
-    //2
+    //Zweite Step- Funktion die user noch mehr Möglichkeiten erlaubt
+    public static double stepFunktion(double x, double stepXPos, double leftVal, double rightVal) {
+        if (x < stepXPos) {
+            return leftVal;
+        } else {
+            return rightVal;
+        }
+    }
+
+    //
     public static double sigmoidFunktion(double x) {
         return 1.0 / (1.0 + Math.exp(-x));
     }
