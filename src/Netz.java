@@ -1,7 +1,11 @@
+
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Netz {
+    ArrayList<ArrayList<Double>> forwardPassResults;
+    ArrayList<ArrayList<Double>> neuronInputs;
     private double bias = 0;
     private int firstLayerNeurons;
     // Liste der Schichten des Netzes
@@ -35,9 +39,22 @@ public class Netz {
     public double forwardPass() {
         ArrayList<Double> aktuelleEingabe = new ArrayList<>(input);
         for (Schicht schicht : schichten) {
-            aktuelleEingabe = schicht.schichtSum(aktuelleEingabe, bias);
+            aktuelleEingabe = schicht.schichtSum(aktuelleEingabe, bias).stream().map(e -> e[0]).collect(Collectors.toCollection(ArrayList::new));
+            neuronInputs.add(schicht.schichtSum(aktuelleEingabe, bias).stream().map(e -> e[1]).collect(Collectors.toCollection(ArrayList::new)));
+            forwardPassResults = new ArrayList<>();
+            forwardPassResults.add(aktuelleEingabe);
         }
         return aktuelleEingabe.stream().mapToDouble(Double::doubleValue).sum();
+    }
+
+    public void backwardPass(Double expectedValue){
+        double error = Math.pow((forwardPass()-expectedValue),2);
+        ArrayList<ArrayList<Double>> deltas = new ArrayList<>();
+        for(int i = 0; i < forwardPassResults.getLast().size(); i++){
+
+
+            double delta = Aktivierungsfunktionen.derivativeSelect(getNeuron(forwardPassResults.size(), i).aktFkt, neuronInputs.getLast().get(i));
+        }
     }
 
     /*public static void main(String[] args) {
@@ -109,6 +126,9 @@ public class Netz {
 
     public void setNeuronWeights(int layer, int pos, int inputPos, double weight) {
         schichten.get(layer).getNeuron(pos).setWeights(inputPos, weight);
+    }
+    public Neuron getNeuron(int layer, int pos) {
+        return schichten.get(layer).getNeuron(pos);
     }
 
     public void setBiasWeights(int layer, int pos, double weight) {

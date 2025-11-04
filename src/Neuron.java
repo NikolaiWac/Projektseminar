@@ -49,7 +49,7 @@ public class Neuron {
     }
 
     //Berechnet den Output des Knoten
-    public double outputFkt(ArrayList<Double> input, double bias) {
+    public double[] outputFkt(ArrayList<Double> input, double bias) {
         double sum = 0;
         //es wird in der Formel Bias gebraucht, keine Ahnung ob
         //wir den schon jetz brauchen
@@ -57,6 +57,6 @@ public class Neuron {
             sum += input.get(j) * weights.get(j);
         }
         sum += bias * biasWeight;
-        return Aktivierungsfunktionen.funktionSelect(sum, aktFkt, furtherFktInfo);
+        return new double[]{Aktivierungsfunktionen.funkcionSelect(sum, aktFkt, furtherFktInfo), sum};
     }
 }

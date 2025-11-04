@@ -22,8 +22,8 @@ public class Schicht {
 
     //Berechnet die Summe aller Neuronen in der Schicht
     //Benötigt summe von vorheriger schicht aus Netz-Klasse
-    public ArrayList<Double> schichtSum(ArrayList<Double> input, double bias) {
-        ArrayList<Double> sum = new ArrayList<>();
+    public ArrayList<double[]> schichtSum(ArrayList<Double> input, double bias) {
+        ArrayList<double[]> sum = new ArrayList<>();
         for (int i = 0; i < neuronen.size(); i++) {
             sum.add(neuronen.get(i).outputFkt(input, bias));
         }
