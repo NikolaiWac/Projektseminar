@@ -23,4 +23,4 @@ Schnellstart:
 
 Hinweise/Limitierungen:
 - Kein Lernen/Backpropagation; Gewichte werden aktuell zufällig gesetzt, daher ändert sich der Output bei jedem Lauf.
-- Bias ist momentan kann in mittlerweile bestimmt werden, Step‑Schwelle dynamisch setzbar aber Standard auf 0.
+- Bias kann in mittlerweile benutzt werden, Step‑Schwelle dynamisch setzbar aber Standard auf 0.
