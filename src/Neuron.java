@@ -1,9 +1,10 @@
 import java.util.ArrayList;
 
 public class Neuron {
-    ArrayList<Double> furtherFktInfo;
+    private double biasWeight;
+    private ArrayList<Double> furtherFktInfo;
     int aktFkt;
-    ArrayList<Double> weights;
+    private ArrayList<Double> weights;
     int inputNum;
 
     public int getAktFkt() {
@@ -27,6 +28,10 @@ public class Neuron {
         this.weights.set(input, weights);
     }
 
+    public void setBiasWeight (double biasWeight) {
+        this.biasWeight = biasWeight;
+    }
+
     //input number damit weights direkt beim erstellen zugewiesen werden können
     public Neuron(int aktFkt, int inputNum) {
         this.aktFkt = aktFkt;
@@ -44,15 +49,14 @@ public class Neuron {
     }
 
     //Berechnet den Output des Knoten
-    public double outputFkt(ArrayList<Double> input) {
+    public double outputFkt(ArrayList<Double> input, double bias) {
         double sum = 0;
         //es wird in der Formel Bias gebraucht, keine Ahnung ob
         //wir den schon jetz brauchen
-        double bias = 0;
         for (int j = 0; j < input.size(); j++) {
             sum += input.get(j) * weights.get(j);
         }
-        sum += bias;
+        sum += bias * biasWeight;
         return Aktivierungsfunktionen.funktionSelect(sum, aktFkt, furtherFktInfo);
     }
 }

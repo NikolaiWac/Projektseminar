@@ -2,9 +2,11 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Netz {
-    // Liste der Schichten des Netzes
+    private double bias = 0;
     private int firstLayerNeurons;
+    // Liste der Schichten des Netzes
     private ArrayList<Schicht> schichten = new ArrayList<>();
+    // Hauptinput des Netzes
     private ArrayList<Double> input;
 
     // Konstruktor: Erstellt für jede übergebene Zahl eine Schicht außer für erste Schicht
@@ -30,16 +32,12 @@ public class Netz {
 
     // Durchläuft das Netzwerk: Input -> Eingaben als Liste
     // Output -> Ausgabe als Double
-    public double vorwaerts() {
+    public double forwardPass() {
         ArrayList<Double> aktuelleEingabe = new ArrayList<>(input);
-
         for (Schicht schicht : schichten) {
-            double summe = schicht.schichtSum(aktuelleEingabe);
-            ArrayList<Double> naechsteEingabe = new ArrayList<>(1);
-            naechsteEingabe.add(summe);
-            aktuelleEingabe = naechsteEingabe;
+            aktuelleEingabe = schicht.schichtSum(aktuelleEingabe, bias);
         }
-        return aktuelleEingabe.getFirst();
+        return aktuelleEingabe.stream().mapToDouble(Double::doubleValue).sum();
     }
 
     /*public static void main(String[] args) {
@@ -111,5 +109,17 @@ public class Netz {
 
     public void setNeuronWeights(int layer, int pos, int inputPos, double weight) {
         schichten.get(layer).getNeuron(pos).setWeights(inputPos, weight);
+    }
+
+    public void setBiasWeights(int layer, int pos, double weight) {
+        schichten.get(layer).getNeuron(pos).setBiasWeight(weight);
+    }
+
+    public double getBias() {
+        return bias;
+    }
+
+    public void setBias(double bias) {
+        this.bias = bias;
     }
 }
