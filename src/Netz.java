@@ -48,12 +48,17 @@ public class Netz {
     }
 
     public void backwardPass(Double expectedValue){
-        double error = Math.pow((forwardPass()-expectedValue),2);
         ArrayList<ArrayList<Double>> deltas = new ArrayList<>();
+        ArrayList<Double> outputDeltas = new ArrayList<>();
         for(int i = 0; i < forwardPassResults.getLast().size(); i++){
+            double error = (expectedValue - neuronInputs.getLast().get(i));
+            double delta = Aktivierungsfunktionen.derivativeSelect(getNeuron(forwardPassResults.size()-1, i).aktFkt, neuronInputs.getLast().get(i)) * error;
+            outputDeltas.add(delta);
+        }
+        deltas.add(outputDeltas);
+        for(int i = schichten.size()-2; i >= 0; i--){
+            double delta = Aktivierungsfunktionen.derivativeSelect(getNeuron(i, ).aktFkt, neuronInputs.getLast().get(i))
 
-
-            double delta = Aktivierungsfunktionen.derivativeSelect(getNeuron(forwardPassResults.size(), i).aktFkt, neuronInputs.getLast().get(i));
         }
     }
 
