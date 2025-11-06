@@ -1,6 +1,6 @@
 import java.util.ArrayList;
 
-public class Aktivierungsfunktionen {
+public class ActFuntions {
 
     //für funktionen die mehr infos brauchen um zu funktionieren, einfache funktionen sollten trotzdem noch funktionieren
     public static double funkcionSelect(double x, int aktFkt, ArrayList<Double> furtherInfo) {

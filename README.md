@@ -1,8 +1,8 @@
 # Projektseminar – Einfaches neuronales Netz (Java)
 
 Projektstruktur:
-- Aktivierungsfunktionen.java
-  - Enthält einfache Aktivierungsfunktionen: Identität (0), Step (1, Schwelle aktuell 0), Sigmoid (2, Default).
+- ActFuntions.java
+  - Enthält einfache ActFuntions: Identität (0), Step (1, Schwelle aktuell 0), Sigmoid (2, Default).
   - funktionSelect(x, aktFkt) wählt anhand einer Ganzzahl die Funktion.
 - Neuron.java
   - Felder: aktFkt (Aktivierungs-ID), weights (Gewichte).

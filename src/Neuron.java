@@ -1,6 +1,9 @@
 import java.util.ArrayList;
 
 public class Neuron {
+    private int layerPos;
+    private double out;
+    private double in;
     private double biasWeight;
     private ArrayList<Double> furtherFktInfo;
     int aktFkt;
@@ -33,7 +36,8 @@ public class Neuron {
     }
 
     //input number damit weights direkt beim erstellen zugewiesen werden können
-    public Neuron(int aktFkt, int inputNum) {
+    public Neuron(int aktFkt, int inputNum, int layerPos) {
+        this.layerPos = layerPos;
         this.aktFkt = aktFkt;
         weights = new ArrayList<>();
         this.inputNum = inputNum;
@@ -49,7 +53,7 @@ public class Neuron {
     }
 
     //Berechnet den Output des Knoten
-    public double[] outputFkt(ArrayList<Double> input, double bias) {
+    public double outputFkt(ArrayList<Double> input, double bias) {
         double sum = 0;
         //es wird in der Formel Bias gebraucht, keine Ahnung ob
         //wir den schon jetz brauchen
@@ -57,6 +61,20 @@ public class Neuron {
             sum += input.get(j) * weights.get(j);
         }
         sum += bias * biasWeight;
-        return new double[]{Aktivierungsfunktionen.funkcionSelect(sum, aktFkt, furtherFktInfo), sum};
+        in = sum;
+        out = ActFuntions.funkcionSelect(sum, aktFkt, furtherFktInfo);
+        return out;
+    }
+
+    public double getOut() {
+        return out;
+    }
+
+    public double getIn() {
+        return in;
+    }
+
+    public int getLayerPos(){
+        return layerPos;
     }
 }

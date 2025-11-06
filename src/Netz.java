@@ -1,11 +1,8 @@
 
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class Netz {
-    ArrayList<ArrayList<Double>> forwardPassResults;
-    ArrayList<ArrayList<Double>> neuronInputs;
     private double bias = 0;
     private int firstLayerNeurons;
     // Liste der Schichten des Netzes
@@ -39,83 +36,37 @@ public class Netz {
     public double forwardPass() {
         ArrayList<Double> aktuelleEingabe = new ArrayList<>(input);
         for (Schicht schicht : schichten) {
-            aktuelleEingabe = schicht.schichtSum(aktuelleEingabe, bias).stream().map(e -> e[0]).collect(Collectors.toCollection(ArrayList::new));
-            neuronInputs.add(schicht.schichtSum(aktuelleEingabe, bias).stream().map(e -> e[1]).collect(Collectors.toCollection(ArrayList::new)));
-            forwardPassResults = new ArrayList<>();
-            forwardPassResults.add(aktuelleEingabe);
+            aktuelleEingabe = schicht.schichtSum(aktuelleEingabe, bias);
         }
         return aktuelleEingabe.stream().mapToDouble(Double::doubleValue).sum();
     }
 
-    public void backwardPass(Double expectedValue){
+    public void backwardPass(Double expectedValue) {
+        forwardPass();
         ArrayList<ArrayList<Double>> deltas = new ArrayList<>();
         ArrayList<Double> outputDeltas = new ArrayList<>();
-        for(int i = 0; i < forwardPassResults.getLast().size(); i++){
-            double error = (expectedValue - neuronInputs.getLast().get(i));
-            double delta = Aktivierungsfunktionen.derivativeSelect(getNeuron(forwardPassResults.size()-1, i).aktFkt, neuronInputs.getLast().get(i)) * error;
-            outputDeltas.add(delta);
-        }
+        ArrayList<Neuron> currentLayer = schichten.getLast().getNeuronen();
+        outputDeltas = currentLayer.stream().map(e -> (ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (expectedValue - e.getOut()))).collect(Collectors.toCollection(ArrayList::new));
         deltas.add(outputDeltas);
-        for(int i = schichten.size()-2; i >= 0; i--){
-            double delta = Aktivierungsfunktionen.derivativeSelect(getNeuron(i, ).aktFkt, neuronInputs.getLast().get(i))
+        //Durchlaufen für jede Schicht
+        for (int i = schichten.size() - 2; i >= 0; i--) {
+            currentLayer = schichten.get(i).getNeuronen();
+            ArrayList<Neuron> nextLayer = schichten.get(i + 1).getNeuronen();
+            ArrayList<Double> prevDeltas = deltas.get(0);
+            ArrayList<Double> currentDeltas = new ArrayList<>();
+            for (int j = 0; j < nextLayer.size(); j++) {
+                Neuron neuron = currentLayer.get(j);
+                double sum = 0.0;
 
-        }
-    }
-
-    /*public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Anzahl der Schichten eingeben (>= 2):");
-        int anzahlSchichten = readPositiveInt(sc);
-
-        int[] neuronenProSchicht = new int[anzahlSchichten];
-        for (int i = 0; i < anzahlSchichten; i++) {
-            System.out.println("Anzahl der Neuronen für Schicht " + (i + 1) + " eingeben (>= 1):");
-            neuronenProSchicht[i] = readPositiveInt(sc);
-        }
-
-        Netz netz = new Netz(neuronenProSchicht);
-
-        System.out.println("Anzahl der Eingabewerte eingeben (>= 1)");
-        int anzahlInputs = readNonNegativeInt(sc);
-        ArrayList<Double> input = new ArrayList<>();
-        for (int i = 0; i < anzahlInputs; i++) {
-            System.out.println("Eingabewert " + (i + 1) + ":");
-            input.add(readDouble(sc));
-        }
-        double output = netz.vorwaerts(input);
-        System.out.println("Netz-Output: " + output);
-
-    }*/
-
-    private static int readPositiveInt(Scanner sc) {
-        while (true) {
-            try {
-                int v = Integer.parseInt(sc.nextLine().trim());
-                if (v > 0) return v;
-            } catch (Exception ignored) {
+                // Summe der gewichteten Deltas der nächsten Schicht
+                for (int k = 0; k < schichten.size(); k++) {
+                    sum += nextLayer.get(k).getWeights().get(j) * prevDeltas.get(k);
+                }
+                double delta = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
+                currentDeltas.add(delta);
             }
-            System.out.println("Bitte eine ganze Zahl > 0 eingeben:");
-        }
-    }
-
-    private static int readNonNegativeInt(Scanner sc) {
-        while (true) {
-            try {
-                int v = Integer.parseInt(sc.nextLine().trim());
-                if (v >= 0) return v;
-            } catch (Exception ignored) {
-            }
-            System.out.println("Bitte eine ganze Zahl >= 0 eingeben:");
-        }
-    }
-
-    private static double readDouble(Scanner sc) {
-        while (true) {
-            try {
-                return Double.parseDouble(sc.nextLine().trim());
-            } catch (Exception ignored) {
-                System.out.println("Bitte eine gültige Zahl eingeben:");
-            }
+            // Deltas vorne einfügen (damit Indexierung stimmt)
+            deltas.addFirst(currentDeltas);
         }
     }
 
@@ -132,6 +83,7 @@ public class Netz {
     public void setNeuronWeights(int layer, int pos, int inputPos, double weight) {
         schichten.get(layer).getNeuron(pos).setWeights(inputPos, weight);
     }
+
     public Neuron getNeuron(int layer, int pos) {
         return schichten.get(layer).getNeuron(pos);
     }
