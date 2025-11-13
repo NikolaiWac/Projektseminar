@@ -71,4 +71,21 @@ public class testen {
 
         assertEquals(2.02, Math.round(netz.forwardPass() * 100.0) / 100.0);
     }
+
+    @Test
+    public void backwardPassTest() {
+        ArrayList<Double> eingabe = new ArrayList<>();
+        eingabe.add(-10.0);
+        eingabe.add(10.0);
+        Netz netz = new Netz( 2, 2);
+        netz.init(eingabe);
+        netz.setBias(1.0);
+        netz.setLearningRate(0.00001);
+
+        System.out.println(netz.forwardPass());
+        for (int i = 0; i < 5; i++) {
+            netz.backwardPass(2.02);
+        }
+        System.out.println(netz.forwardPass());
+    }
 }

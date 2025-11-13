@@ -77,6 +77,7 @@ public class Netz {
             // Deltas vorne einfügen, damit deltas.get(0) funktioniert
             deltas.addFirst(currentDeltas);
         }
+        //setWeights output Layer
         for (int j = 0; j < schichten.getLast().getNeuronen().size(); j++) {
             Neuron n = schichten.getLast().getNeuronen().get(j);
             for (int i = 0; i < n.getWeights().size(); i++) {
@@ -86,13 +87,23 @@ public class Netz {
                 n.setWeights(i, newWeight);
             }
         }
-        for (int j = schichten.size() - 2; j >= 0 ; j--) {
+        //setWeights hiddenLayers
+        for (int j = schichten.size() - 2; j > 0 ; j--) {
             for (int k = 0; k < schichten.get(j).getNeuronen().size(); k++) {
-                Neuron n = schichten.get(j).getNeuronen().get(j);
+                Neuron n = schichten.get(j).getNeuronen().get(k);
                 for (int i = 0; i < n.getWeights().size(); i++) {
                     double newWeight = n.getWeights().get(i) - (learningRate * getNeuron(j-1, i).getOut() * deltas.get(j).get(k));
                     n.setWeights(i, newWeight);
                 }
+            }
+        }
+        //setWeights input Layer
+        for (int j = 0; j < schichten.getFirst().getNeuronen().size(); j++) {
+            Neuron n = schichten.getFirst().getNeuronen().get(j);
+            for (int i = 0; i < n.getWeights().size(); i++) {
+                double delta = deltas.getFirst().get(j);
+                double newWeight = n.getWeights().get(i) - (learningRate * input.get(i) * delta);
+                n.setWeights(i, newWeight);
             }
         }
     }
