@@ -1,5 +1,6 @@
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.stream.Collectors;
 
 public class Netz {
@@ -9,6 +10,15 @@ public class Netz {
     private ArrayList<Schicht> schichten = new ArrayList<>();
     // Hauptinput des Netzes
     private ArrayList<Double> input;
+    private double learningRate = 1.0;
+
+    public double getLearningRate() {
+        return learningRate;
+    }
+
+    public void setLearningRate(double learningRate) {
+        this.learningRate = learningRate;
+    }
 
     // Konstruktor: Erstellt für jede übergebene Zahl eine Schicht außer für erste Schicht
     // mit entsprechend vielen Neuronen
@@ -44,9 +54,8 @@ public class Netz {
     public void backwardPass(Double expectedValue) {
         forwardPass();
         ArrayList<ArrayList<Double>> deltas = new ArrayList<>();
-        ArrayList<Double> outputDeltas = new ArrayList<>();
         ArrayList<Neuron> currentLayer = schichten.getLast().getNeuronen();
-        outputDeltas = currentLayer.stream().map(e -> (ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (expectedValue - e.getOut()))).collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<Double> outputDeltas = currentLayer.stream().map(e -> (ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (expectedValue - e.getOut()))).collect(Collectors.toCollection(ArrayList::new));
         deltas.add(outputDeltas);
         //Durchlaufen für jede Schicht
         for (int i = schichten.size() - 2; i >= 0; i--) {
@@ -65,8 +74,26 @@ public class Netz {
                 double delta = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
                 currentDeltas.add(delta);
             }
-            // Deltas vorne einfügen (damit Indexierung stimmt)
+            // Deltas vorne einfügen, damit deltas.get(0) funktioniert
             deltas.addFirst(currentDeltas);
+        }
+        for (int j = 0; j < schichten.getLast().getNeuronen().size(); j++) {
+            Neuron n = schichten.getLast().getNeuronen().get(j);
+            for (int i = 0; i < n.getWeights().size(); i++) {
+                int prevLayer = schichten.size() - 2;
+                double delta = deltas.getLast().get(j);
+                double newWeight = n.getWeights().get(i) - (learningRate * getNeuron(prevLayer, i).getOut() * delta);
+                n.setWeights(i, newWeight);
+            }
+        }
+        for (int j = schichten.size() - 2; j >= 0 ; j--) {
+            for (int k = 0; k < schichten.get(j).getNeuronen().size(); k++) {
+                Neuron n = schichten.get(j).getNeuronen().get(j);
+                for (int i = 0; i < n.getWeights().size(); i++) {
+                    double newWeight = n.getWeights().get(i) - (learningRate * getNeuron(j-1, i).getOut() * deltas.get(j).get(k));
+                    n.setWeights(i, newWeight);
+                }
+            }
         }
     }
 
