@@ -77,15 +77,25 @@ public class testen {
         ArrayList<Double> eingabe = new ArrayList<>();
         eingabe.add(-10.0);
         eingabe.add(10.0);
-        Netz netz = new Netz( 2, 2);
+
+        Netz netz = new Netz(2, 6, 1);
         netz.init(eingabe);
         netz.setBias(1.0);
-        netz.setLearningRate(0.00001);
+        netz.setLearningRate(0.001);
 
-        System.out.println(netz.forwardPass());
-        for (int i = 0; i < 5; i++) {
-            netz.backwardPass(2.02);
+        double target = 4.02;
+
+        double before = netz.forwardPass();
+        for (int i = 0; i < 1000; i++) {
+            netz.backwardPass(target);
         }
-        System.out.println(netz.forwardPass());
+        double after = netz.forwardPass();
+
+        // Test: Output nach Training soll näher am Zielwert sein
+        double diffBefore = Math.abs(before - target);
+        double diffAfter = Math.abs(after - target);
+
+        System.out.println("Vorher: " + before + "  Nachher: " + after);
+        assertTrue(diffAfter < diffBefore);
     }
 }
