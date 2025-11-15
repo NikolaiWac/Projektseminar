@@ -53,7 +53,7 @@ public class ActFuntions {
             return stepFunctionDerivation();
             }
         else {
-            return sigmoidFunction(x);
+            return sigmoidFunctionDerivation(x);
         }
     }
 

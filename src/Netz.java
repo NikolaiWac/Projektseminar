@@ -52,10 +52,19 @@ public class Netz {
     }
 
     public void backwardPass(Double expectedValue) {
-        forwardPass();
+        // Den Gesamt-Output (Summe) vom forwardPass abfangen
+        double totalOutput = forwardPass();
         ArrayList<ArrayList<Double>> deltas = new ArrayList<>();
         ArrayList<Neuron> currentLayer = schichten.getLast().getNeuronen();
-        ArrayList<Double> outputDeltas = currentLayer.stream().map(e -> (ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (expectedValue - e.getOut()))).collect(Collectors.toCollection(ArrayList::new));
+
+        // Den Fehler (error) einmal berechnen
+        final double error = totalOutput - expectedValue; // (output - target)
+
+        // Den korrekten Fehlerterm (error) für alle Output-Neuronen verwenden
+        ArrayList<Double> outputDeltas = currentLayer.stream()
+                .map(e -> (ActFuntions.derivativeSelect(e.getAktFkt(), e.getIn()) * error))
+                .collect(Collectors.toCollection(ArrayList::new));
+
         deltas.add(outputDeltas);
         //Durchlaufen für jede Schicht
         for (int i = schichten.size() - 2; i >= 0; i--) {
@@ -68,7 +77,7 @@ public class Netz {
                 double sum = 0.0;
 
                 // Summe der gewichteten Deltas der nächsten Schicht
-                for (int k = 0; k < schichten.size(); k++) {
+                for (int k = 0; k < nextLayer.size(); k++) {
                     sum += nextLayer.get(k).getWeights().get(j) * prevDeltas.get(k);
                 }
                 double delta = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;

@@ -73,19 +73,52 @@ public class testen {
     }
 
     @Test
-    public void backwardPassTest() {
+    public void backwardPassTest2() {
         ArrayList<Double> eingabe = new ArrayList<>();
-        eingabe.add(-10.0);
-        eingabe.add(10.0);
-        Netz netz = new Netz( 2, 2);
+        eingabe.add(0.5);
+        eingabe.add(0.3);
+
+        // Erstelle ein Netz mit 2 Inputs, 1 Hidden Neuron und 1 Output Neuron
+        Netz netz = new Netz(1, 1);
         netz.init(eingabe);
         netz.setBias(1.0);
-        netz.setLearningRate(0.00001);
+        netz.setLearningRate(0.1); // Lernrate
 
-        System.out.println(netz.forwardPass());
-        for (int i = 0; i < 5; i++) {
-            netz.backwardPass(2.02);
+        // Setze alle Aktivierungsfunktionen auf Sigmoid (ID 2), da diese differenzierbar ist
+        netz.setNeuronFkt(0, 0, 2); // Hidden Layer
+        netz.setNeuronFkt(1, 0, 2); // Output Layer
+
+        // Setze feste Startgewichte für deterministisches Testen
+        // Hidden Neuron (Layer 0, Neuron 0)
+        netz.setNeuronWeights(0, 0, 0, 0.2); // Gewicht von Input 0
+        netz.setNeuronWeights(0, 0, 1, 0.4); // Gewicht von Input 1
+        netz.setBiasWeights(0, 0, 0.1);     // Bias Gewicht
+
+        // Output Neuron (Layer 1, Neuron 0)
+        netz.setNeuronWeights(1, 0, 0, 0.5); // Gewicht von Hidden Neuron 0
+        netz.setBiasWeights(1, 0, 0.3);     // Bias Gewicht
+
+        // Definiere ein Ziel
+        double target = 0.85;
+
+        // 1. Berechne den Output VOR dem Training
+        double outputBefore = netz.forwardPass();
+        double errorBefore = Math.abs(target - outputBefore);
+        System.out.println("Output vor Training: " + outputBefore);
+        System.out.println("Fehler vor Training: " + errorBefore);
+
+        // 2. Trainiere das Netz für 100 Iterationen
+        for (int i = 0; i < 100; i++) {
+            netz.backwardPass(target);
         }
-        System.out.println(netz.forwardPass());
+
+        // 3. Berechne den Output NACH dem Training
+        double outputAfter = netz.forwardPass();
+        double errorAfter = Math.abs(target - outputAfter);
+        System.out.println("Output nach Training: " + outputAfter);
+        System.out.println("Fehler nach Training: " + errorAfter);
+
+        // 4. Prüfe, ob der Fehler kleiner geworden ist
+        assertTrue(errorAfter < errorBefore, "Der Fehler sollte nach dem Training kleiner sein.");
     }
 }
