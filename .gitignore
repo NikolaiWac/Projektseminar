@@ -28,3 +28,4 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+/backward_pass_forward_values.csv

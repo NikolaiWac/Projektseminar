@@ -1,4 +1,11 @@
 import java.util.ArrayList;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import org.junit.jupiter.api.Test;
 
@@ -86,8 +93,26 @@ public class testen {
         double target = 4.02;
 
         double before = netz.forwardPass();
-        for (int i = 0; i < 1000; i++) {
-            netz.backwardPass(target);
+        // Datei für Excel (CSV) vorbereiten und nach jedem Backward-Pass den Forward-Wert protokollieren
+        Path csvPath = Paths.get(System.getProperty("user.dir"), "backward_pass_forward_values.csv");
+        try (BufferedWriter writer = Files.newBufferedWriter(
+                csvPath,
+                StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING
+        )) {
+            // Header schreiben
+            writer.write("Iteration;ForwardPass\n");
+
+            for (int i = 1; i <= 1000; i++) {
+                netz.backwardPass(target);
+                double current = netz.forwardPass();
+                // Semikolon als Trennzeichen verwenden (Excel-kompatibel in vielen Ländereinstellungen)
+                writer.write(i + ";" + current + "\n");
+            }
+            writer.flush();
+        } catch (IOException e) {
+            fail("Konnte CSV-Datei nicht schreiben: " + e.getMessage());
         }
         double after = netz.forwardPass();
 
