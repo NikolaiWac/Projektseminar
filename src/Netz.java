@@ -38,6 +38,7 @@ public class Netz {
         if (input != null) {
             this.input = input;
             schichten.addFirst(new Schicht(firstLayerNeurons, input.size()));
+
         }
     }
 
