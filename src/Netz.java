@@ -1,16 +1,12 @@
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.stream.Collectors;
-
 public class Netz {
     private double bias = 0;
     private int firstLayerNeurons;
-    // Liste der Schichten des Netzes
-    private ArrayList<Schicht> schichten = new ArrayList<>();
+    // Schichten des Netzes
+    private Schicht[] schichten;
     // Hauptinput des Netzes
-    private ArrayList<Double> input;
+    private double[] input;
     private double learningRate = 1.0;
+    private int[] neuronsPerLayer;
 
     public double getLearningRate() {
         return learningRate;
@@ -24,87 +20,104 @@ public class Netz {
     // mit entsprechend vielen Neuronen
     // aktuell alle Schichten erstellt bis auf die erste, Neuronen in der jeweiligen Schicht kriegen direkt anzahl an inputs
     public Netz(int... anzahlNeuronenProSchicht) {
-        if (anzahlNeuronenProSchicht != null) {
-            firstLayerNeurons = anzahlNeuronenProSchicht[0];
-            for (int i = 1; i < anzahlNeuronenProSchicht.length; i++) {
-                schichten.add(new Schicht(anzahlNeuronenProSchicht[i], anzahlNeuronenProSchicht[i - 1]));
-            }
+        if (anzahlNeuronenProSchicht != null && anzahlNeuronenProSchicht.length > 0) {
+            this.neuronsPerLayer = anzahlNeuronenProSchicht.clone();
+            this.firstLayerNeurons = anzahlNeuronenProSchicht[0];
+            this.schichten = new Schicht[anzahlNeuronenProSchicht.length];
         }
     }
 
     //hier wird der input fürs netz übergeben, erst jetzt kann das netzt genutzt werden
     //erste Schicht wird erst hier erzeugt, denn erst hier klar wieviele inputs die erste Schicht bekommt
-    public void init(ArrayList<Double> input) {
+    public void init(double[] input) {
         if (input != null) {
             this.input = input;
-            schichten.addFirst(new Schicht(firstLayerNeurons, input.size()));
-
+            // Erste Schicht kennt erst jetzt die Anzahl an Inputs
+            schichten[0] = new Schicht(firstLayerNeurons, input.length);
+            // Restliche Schichten hängen nur von Anzahl Neuronen der vorherigen Schicht ab
+            for (int i = 1; i < schichten.length; i++) {
+                schichten[i] = new Schicht(neuronsPerLayer[i], neuronsPerLayer[i - 1]);
+            }
         }
     }
 
     // Durchläuft das Netzwerk: Input -> Eingaben als Liste
     // Output -> Ausgabe als Double
     public double forwardPass() {
-        ArrayList<Double> aktuelleEingabe = new ArrayList<>(input);
-        for (Schicht schicht : schichten) {
-            aktuelleEingabe = schicht.schichtSum(aktuelleEingabe, bias);
+        double[] aktuelleEingabe = input.clone();
+        for (int i = 0; i < schichten.length; i++) {
+            aktuelleEingabe = schichten[i].schichtSum(aktuelleEingabe, bias);
         }
-        return aktuelleEingabe.stream().mapToDouble(Double::doubleValue).sum();
+        double sum = 0.0;
+        for (double v : aktuelleEingabe) sum += v;
+        return sum;
     }
 
-    public void backwardPass(Double expectedValue) {
+    public void backwardPass(double expectedValue) {
+        // Führt Forward Pass aus, um In/Out in Neuronen zu aktualisieren
         forwardPass();
-        ArrayList<ArrayList<Double>> deltas = new ArrayList<>();
-        ArrayList<Neuron> currentLayer = schichten.getLast().getNeuronen();
-        ArrayList<Double> outputDeltas = currentLayer.stream().map(e -> (ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (expectedValue - e.getOut()))).collect(Collectors.toCollection(ArrayList::new));
-        deltas.add(outputDeltas);
-        //Durchlaufen für jede Schicht
-        for (int i = schichten.size() - 2; i >= 0; i--) {
-            currentLayer = schichten.get(i).getNeuronen();
-            ArrayList<Neuron> nextLayer = schichten.get(i + 1).getNeuronen();
-            ArrayList<Double> prevDeltas = deltas.getFirst();
-            ArrayList<Double> currentDeltas = new ArrayList<>();
-            //Iterieren über die Neuronen der aktuellen Schicht, und berechen für jedes den Fehler/Delta
-            for (int j = 0; j < currentLayer.size(); j++) {
-                Neuron neuron = currentLayer.get(j);
-                double sum = 0.0;
-                // Iterieren über die vorherige Schicht(beim Folienbeispiel Schicht K)
-                // Multipliziert dann das Gewicht zwischen aktuellen Neuron J und vorherigen Neuron K mit dem Fehler vom Neuron K
-                for (int k = 0; k < nextLayer.size(); k++) {
-                    sum += nextLayer.get(k).getWeights().get(j) * prevDeltas.get(k);
-                }
-                double delta = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
-                currentDeltas.add(delta);
-            }
-            // Deltas vorne einfügen, damit deltas.get(0) funktioniert
-            deltas.addFirst(currentDeltas);
+
+        int L = schichten.length;
+        // Deltas pro Schicht, gleiche Indizierung wie schichten
+        double[][] deltas = new double[L][];
+
+        // Output-Layer Deltas
+        int last = L - 1;
+        Neuron[] outLayer = schichten[last].getNeuronen();
+        deltas[last] = new double[outLayer.length];
+        for (int j = 0; j < outLayer.length; j++) {
+            Neuron e = outLayer[j];
+            deltas[last][j] = ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (expectedValue - e.getOut());
         }
-        //setWeights output Layer
-        for (int j = 0; j < schichten.getLast().getNeuronen().size(); j++) {
-            Neuron n = schichten.getLast().getNeuronen().get(j);
-            for (int i = 0; i < n.getWeights().size(); i++) {
-                int prevLayer = schichten.size() - 2;
-                double delta = deltas.getLast().get(j);
-                double newWeight = n.getWeights().get(i) + (learningRate * getNeuron(prevLayer, i).getOut() * delta);
+
+        // Hidden-Layer Deltas rückwärts berechnen
+        for (int i = L - 2; i >= 0; i--) {
+            Neuron[] currentLayer = schichten[i].getNeuronen();
+            Neuron[] nextLayer = schichten[i + 1].getNeuronen();
+            deltas[i] = new double[currentLayer.length];
+            for (int j = 0; j < currentLayer.length; j++) {
+                Neuron neuron = currentLayer[j];
+                double sum = 0.0;
+                for (int k = 0; k < nextLayer.length; k++) {
+                    sum += nextLayer[k].getWeights()[j] * deltas[i + 1][k];
+                }
+                deltas[i][j] = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
+            }
+        }
+
+        // Gewichte Output-Layer anpassen
+        int prevLayerIdx = L - 2;
+        for (int j = 0; j < outLayer.length; j++) {
+            Neuron n = outLayer[j];
+            double[] w = n.getWeights();
+            for (int i = 0; i < w.length; i++) {
+                double delta = deltas[last][j];
+                double newWeight = w[i] + (learningRate * getNeuron(prevLayerIdx, i).getOut() * delta);
                 n.setWeights(i, newWeight);
             }
         }
-        //setWeights hiddenLayers
-        for (int j = schichten.size() - 2; j > 0 ; j--) {
-            for (int k = 0; k < schichten.get(j).getNeuronen().size(); k++) {
-                Neuron n = schichten.get(j).getNeuronen().get(k);
-                for (int i = 0; i < n.getWeights().size(); i++) {
-                    double newWeight = n.getWeights().get(i) + (learningRate * getNeuron(j-1, i).getOut() * deltas.get(j).get(k));
+
+        // Gewichte Hidden-Layer anpassen (ohne Input-Layer)
+        for (int layer = L - 2; layer > 0; layer--) {
+            Neuron[] layerNeurons = schichten[layer].getNeuronen();
+            for (int k = 0; k < layerNeurons.length; k++) {
+                Neuron n = layerNeurons[k];
+                double[] w = n.getWeights();
+                for (int i = 0; i < w.length; i++) {
+                    double newWeight = w[i] + (learningRate * getNeuron(layer - 1, i).getOut() * deltas[layer][k]);
                     n.setWeights(i, newWeight);
                 }
             }
         }
-        //setWeights input Layer
-        for (int j = 0; j < schichten.getFirst().getNeuronen().size(); j++) {
-            Neuron n = schichten.getFirst().getNeuronen().get(j);
-            for (int i = 0; i < n.getWeights().size(); i++) {
-                double delta = deltas.getFirst().get(j);
-                double newWeight = n.getWeights().get(i) + (learningRate * input.get(i) * delta);
+
+        // Gewichte Input-Layer anpassen (Layer 0 nutzt direkt die Eingangswerte)
+        Neuron[] firstLayer = schichten[0].getNeuronen();
+        for (int j = 0; j < firstLayer.length; j++) {
+            Neuron n = firstLayer[j];
+            double[] w = n.getWeights();
+            for (int i = 0; i < w.length; i++) {
+                double delta = deltas[0][j];
+                double newWeight = w[i] + (learningRate * input[i] * delta);
                 n.setWeights(i, newWeight);
             }
         }
@@ -112,24 +125,24 @@ public class Netz {
 
     //setNeuron Funktionen aktuell ohne Fehlermeldungen
     public void setNeuronFkt(int layer, int pos, int fkt) {
-        schichten.get(layer).getNeuron(pos).setAktFkt(fkt);
+        schichten[layer].getNeuron(pos).setAktFkt(fkt);
     }
 
-    public void setNeuronFkt(int layer, int pos, int fkt, ArrayList<Double> furtherInfo) {
-        schichten.get(layer).getNeuron(pos).setAktFkt(fkt, furtherInfo);
+    public void setNeuronFkt(int layer, int pos, int fkt, double[] furtherInfo) {
+        schichten[layer].getNeuron(pos).setAktFkt(fkt, furtherInfo);
     }
 
 
     public void setNeuronWeights(int layer, int pos, int inputPos, double weight) {
-        schichten.get(layer).getNeuron(pos).setWeights(inputPos, weight);
+        schichten[layer].getNeuron(pos).setWeights(inputPos, weight);
     }
 
     public Neuron getNeuron(int layer, int pos) {
-        return schichten.get(layer).getNeuron(pos);
+        return schichten[layer].getNeuron(pos);
     }
 
     public void setBiasWeights(int layer, int pos, double weight) {
-        schichten.get(layer).getNeuron(pos).setBiasWeight(weight);
+        schichten[layer].getNeuron(pos).setBiasWeight(weight);
     }
 
     public double getBias() {

@@ -1,31 +1,29 @@
-import java.util.ArrayList;
-
 public class Schicht {
-    ArrayList<Neuron> neuronen;
+    Neuron[] neuronen;
 
     public Neuron getNeuron(int pos) {
-        return neuronen.get(pos);
+        return neuronen[pos];
     }
 
-    public ArrayList<Neuron> getNeuronen() {
+    public Neuron[] getNeuronen() {
         return neuronen;
     }
 
     //Initialisiert die gewünschte anzahl an Neuronen
     //Anzahl kommt aus input Netz-Klasse
     public Schicht(int anzNeuron, int inputsCount) {
-        neuronen = new ArrayList<>();
+        neuronen = new Neuron[anzNeuron];
         for (int i = 0; i < anzNeuron; i++) {
-            neuronen.add(new Neuron(0, inputsCount, i));
+            neuronen[i] = new Neuron(0, inputsCount, i);
         }
     }
 
     //Berechnet die Summe aller Neuronen in der Schicht
     //Benötigt summe von vorheriger schicht aus Netz-Klasse
-    public ArrayList<Double> schichtSum(ArrayList<Double> input, double bias) {
-        ArrayList<Double> sum = new ArrayList<>();
-        for (int i = 0; i < neuronen.size(); i++) {
-            sum.add(neuronen.get(i).outputFkt(input, bias));
+    public double[] schichtSum(double[] input, double bias) {
+        double[] sum = new double[neuronen.length];
+        for (int i = 0; i < neuronen.length; i++) {
+            sum[i] = neuronen[i].outputFkt(input, bias);
         }
         return sum;
     }

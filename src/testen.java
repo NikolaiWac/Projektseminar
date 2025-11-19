@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,22 +14,12 @@ public class testen {
     @Test
     public void test1() {
         //erstellen des Hauptinputs für das Netz
-        ArrayList<Double> eingabe = new ArrayList<>();
-        eingabe.add(0.2);
-        eingabe.add(0.8);
-        eingabe.add(0.6);
-        eingabe.add(1.0);
+        double[] eingabe = new double[]{0.2, 0.8, 0.6, 1.0};
         Netz netz = new Netz( 1);
         netz.init(eingabe);
 
         //Informationen für die Aktivierungsfunktion
-        ArrayList<Double> furtherInfo = new ArrayList<>(){
-            {
-                add(1.0);
-                add(0.0);
-                add(1.0);
-            }
-        };
+        double[] furtherInfo = new double[]{1.0, 0.0, 1.0};
         netz.setNeuronFkt(0, 0, 1, furtherInfo);
 
         netz.setNeuronWeights(0, 0, 0, 0.5);
@@ -45,9 +34,7 @@ public class testen {
 
     @Test
     public void test2() {
-        ArrayList<Double> eingabe = new ArrayList<>();
-        eingabe.add(-10.0);
-        eingabe.add(10.0);
+        double[] eingabe = new double[]{-10.0, 10.0};
         Netz netz = new Netz( 2, 2);
         netz.init(eingabe);
         netz.setBias(1.0);
@@ -81,9 +68,7 @@ public class testen {
 
     @Test
     public void backwardPassTest() {
-        ArrayList<Double> eingabe = new ArrayList<>();
-        eingabe.add(-10.0);
-        eingabe.add(10.0);
+        double[] eingabe = new double[]{-10.0, 10.0};
 
         Netz netz = new Netz(2, 6, 1);
         netz.init(eingabe);

@@ -1,14 +1,12 @@
-import java.util.ArrayList;
-
 public class ActFuntions {
 
     //für funktionen die mehr infos brauchen um zu funktionieren, einfache funktionen sollten trotzdem noch funktionieren
-    public static double funkcionSelect(double x, int aktFkt, ArrayList<Double> furtherInfo) {
+    public static double funkcionSelect(double x, int aktFkt, double[] furtherInfo) {
         if (aktFkt == 0) {
             return identityFunction(x);
         } else if (aktFkt == 1) {
             if (furtherInfo != null) {
-                return stepFunction(x, furtherInfo.get(0), furtherInfo.get(1), furtherInfo.get(2));
+                return stepFunction(x, furtherInfo[0], furtherInfo[1], furtherInfo[2]);
             }
             else {
                 return stepFunction(x);

@@ -1,13 +1,11 @@
-import java.util.ArrayList;
-
 public class Neuron {
     private int layerPos;
     private double out;
     private double in;
     private double biasWeight;
-    private ArrayList<Double> furtherFktInfo;
+    private double[] furtherFktInfo;
     int aktFkt;
-    private ArrayList<Double> weights;
+    private double[] weights;
     int inputNum;
 
     public int getAktFkt() {
@@ -18,17 +16,17 @@ public class Neuron {
         this.aktFkt = aktFkt;
     }
 
-    public void setAktFkt(int aktFkt,  ArrayList<Double> furtherInfo) {
+    public void setAktFkt(int aktFkt,  double[] furtherInfo) {
         this.aktFkt = aktFkt;
         furtherFktInfo = furtherInfo;
     }
 
-    public ArrayList<Double> getWeights() {
+    public double[] getWeights() {
         return weights;
     }
 
     public void setWeights(int input, double weights) {
-        this.weights.set(input, weights);
+        this.weights[input] = weights;
     }
 
     public void setBiasWeight (double biasWeight) {
@@ -39,7 +37,7 @@ public class Neuron {
     public Neuron(int aktFkt, int inputNum, int layerPos) {
         this.layerPos = layerPos;
         this.aktFkt = aktFkt;
-        weights = new ArrayList<>();
+        weights = new double[inputNum];
         this.inputNum = inputNum;
         asignrandomWeights();
     }
@@ -48,17 +46,17 @@ public class Neuron {
     //lernen anfangen
     public void asignrandomWeights() {
         for (int i = 0; i < inputNum; i++) {
-            weights.add(Math.random());
+            weights[i] = Math.random();
         }
     }
 
     //Berechnet den Output des Knoten
-    public double outputFkt(ArrayList<Double> input, double bias) {
+    public double outputFkt(double[] input, double bias) {
         double sum = 0;
         //es wird in der Formel Bias gebraucht, keine Ahnung ob
         //wir den schon jetz brauchen
-        for (int j = 0; j < input.size(); j++) {
-            sum += input.get(j) * weights.get(j);
+        for (int j = 0; j < input.length; j++) {
+            sum += input[j] * weights[j];
         }
         sum += bias * biasWeight;
         in = sum;

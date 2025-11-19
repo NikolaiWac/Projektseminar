@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 public class TestDatenSatz {
 
         public static void main(String[] args) {
@@ -21,9 +19,9 @@ public class TestDatenSatz {
                 yTrain[i]    = mieteReell[i] / 1000.0;
             }
 
-            ArrayList<Double> eingabe = new ArrayList<>();
-            eingabe.add(xTrain[0][0]);
-            eingabe.add(xTrain[0][1]);
+            double[] eingabe = new double[2];
+            eingabe[0] = xTrain[0][0];
+            eingabe[1] = xTrain[0][1];
 
             // Netz erzeugen
             Netz netz = new Netz(2, 6, 1);
@@ -40,8 +38,8 @@ public class TestDatenSatz {
 
                 for (int i = 0; i < n; i++) {
                     // Aktuelle Wohnung
-                    eingabe.set(0, xTrain[i][0]);
-                    eingabe.set(1, xTrain[i][1]);
+                    eingabe[0] = xTrain[i][0];
+                    eingabe[1] = xTrain[i][1];
 
                     // Vorwärtsdurchlauf
                     double output = netz.forwardPass();
@@ -62,8 +60,8 @@ public class TestDatenSatz {
 
             System.out.println("\nTrainingsdaten vs. Netzvorhersage (denormalisiert):");
             for (int i = 0; i < n; i++) {
-                eingabe.set(0, xTrain[i][0]);
-                eingabe.set(1, xTrain[i][1]);
+                eingabe[0] = xTrain[i][0];
+                eingabe[1] = xTrain[i][1];
 
                 double outputNorm = netz.forwardPass();
                 double outputEuro = outputNorm * 1000.0;
@@ -92,13 +90,13 @@ public class TestDatenSatz {
         }
 
 
-        private static void testWohnung(Netz netz, ArrayList<Double> eingabe,
+        private static void testWohnung(Netz netz, double[] eingabe,
                                         double qm, int zimmer) {
             double qmNorm = qm / 100.0;
             double zimmerNorm = zimmer / 10.0;
 
-            eingabe.set(0, qmNorm);
-            eingabe.set(1, zimmerNorm);
+            eingabe[0] = qmNorm;
+            eingabe[1] = zimmerNorm;
 
             double outputNorm = netz.forwardPass();
             double outputEuro = outputNorm * 1000.0;
