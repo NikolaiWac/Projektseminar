@@ -51,7 +51,8 @@ public class ActFuntions {
             return stepFunctionDerivation();
             }
         else {
-            return sigmoidFunction(x);
+            // Für Sigmoid-aktivierte Neuronen die korrekte Ableitung σ(x)*(1-σ(x)) verwenden
+            return sigmoidFunctionDerivation(x);
         }
     }
 
