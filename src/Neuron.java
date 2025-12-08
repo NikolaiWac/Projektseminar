@@ -45,9 +45,14 @@ public class Neuron {
     //Das ist wahrscheinlich temp bis wir mit dem eigentlichen
     //lernen anfangen
     public void asignrandomWeights() {
+        // Xavier/Glorot-style uniform initialization to avoid sigmoid saturation
+        // Initialize weights in [-limit, +limit], where limit = 1/sqrt(fan_in)
+        double limit = 1.0 / Math.sqrt(Math.max(1, inputNum));
         for (int i = 0; i < inputNum; i++) {
-            weights[i] = Math.random();
+            double r = (Math.random() * 2.0 - 1.0) * limit;
+            weights[i] = r;
         }
+        // Keep biasWeight at 0.0 (biases are not updated by current training code)
     }
 
     //Berechnet den Output des Knoten
