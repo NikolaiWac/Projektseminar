@@ -7,11 +7,15 @@ public class ActFuntions {
         } else if (aktFkt == 1) {
             if (furtherInfo != null) {
                 return stepFunction(x, furtherInfo[0], furtherInfo[1], furtherInfo[2]);
-            }
-            else {
+            } else {
                 return stepFunction(x);
             }
+        } else if (aktFkt == 2) {
+            return sigmoidFunction(x);
+        } else if (aktFkt == 3) {
+            return reluFunction(x);
         } else {
+            // default to sigmoid for unknown ids to keep backward compatibility
             return sigmoidFunction(x);
         }
     }
@@ -49,9 +53,15 @@ public class ActFuntions {
             return identityFunctionDerivation();
         } else if (aktFkt == 1) {
             return stepFunctionDerivation();
-            }
-        else {
-            return sigmoidFunction(x);
+        } else if (aktFkt == 2) {
+            // Sigmoid derivative
+            return sigmoidFunctionDerivation(x);
+        } else if (aktFkt == 3) {
+            // ReLU derivative
+            return reluFunctionDerivation(x);
+        } else {
+            // default to sigmoid derivative
+            return sigmoidFunctionDerivation(x);
         }
     }
 
@@ -65,5 +75,14 @@ public class ActFuntions {
 
     public static double sigmoidFunctionDerivation(double x) {
         return sigmoidFunction(x) * (1 - sigmoidFunction(x));
+    }
+
+    // ReLU activation
+    public static double reluFunction(double x) {
+        return Math.max(0.0, x);
+    }
+
+    public static double reluFunctionDerivation(double x) {
+        return x > 0.0 ? 1.0 : 0.0;
     }
 }

@@ -45,9 +45,14 @@ public class Neuron {
     //Das ist wahrscheinlich temp bis wir mit dem eigentlichen
     //lernen anfangen
     public void asignrandomWeights() {
+        // He initialization (optimal for ReLU): uniform in [-limit, +limit]
+        // with limit = sqrt(2.0 / fan_in)
+        double limit = Math.sqrt(2.0 / Math.max(1.0, (double) inputNum));
         for (int i = 0; i < inputNum; i++) {
-            weights[i] = Math.random();
+            double r = (Math.random() * 2.0 - 1.0) * limit;
+            weights[i] = r;
         }
+        // Keep biasWeight at 0.0 (biases are not updated by current training code)
     }
 
     //Berechnet den Output des Knoten

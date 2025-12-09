@@ -53,6 +53,15 @@ public class Netz {
         return sum;
     }
 
+    // Forward pass that returns the full output vector of the last layer
+    public double[] forwardPassVector() {
+        double[] aktuelleEingabe = input.clone();
+        for (int i = 0; i < schichten.length; i++) {
+            aktuelleEingabe = schichten[i].schichtSum(aktuelleEingabe, bias);
+        }
+        return aktuelleEingabe; // outputs of the last layer
+    }
+
     public void backwardPass(double expectedValue) {
         // Führt Forward Pass aus, um In/Out in Neuronen zu aktualisieren
         forwardPass();
@@ -111,6 +120,78 @@ public class Netz {
         }
 
         // Gewichte Input-Layer anpassen (Layer 0 nutzt direkt die Eingangswerte)
+        Neuron[] firstLayer = schichten[0].getNeuronen();
+        for (int j = 0; j < firstLayer.length; j++) {
+            Neuron n = firstLayer[j];
+            double[] w = n.getWeights();
+            for (int i = 0; i < w.length; i++) {
+                double delta = deltas[0][j];
+                double newWeight = w[i] + (learningRate * input[i] * delta);
+                n.setWeights(i, newWeight);
+            }
+        }
+    }
+
+    // Backpropagation for vector outputs (e.g., multi-class). expected must have the same
+    // length as the number of neurons in the output layer.
+    public void backwardPassVector(double[] expected) {
+        // Run forward pass to ensure neuron in/out are up-to-date
+        forwardPass();
+
+        int L = schichten.length;
+        double[][] deltas = new double[L][];
+
+        // Output layer deltas (per neuron target)
+        int last = L - 1;
+        Neuron[] outLayer = schichten[last].getNeuronen();
+        deltas[last] = new double[outLayer.length];
+        for (int j = 0; j < outLayer.length; j++) {
+            Neuron e = outLayer[j];
+            double target = (expected != null && j < expected.length) ? expected[j] : 0.0;
+            deltas[last][j] = ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (target - e.getOut());
+        }
+
+        // Hidden layers deltas (backwards)
+        for (int i = L - 2; i >= 0; i--) {
+            Neuron[] currentLayer = schichten[i].getNeuronen();
+            Neuron[] nextLayer = schichten[i + 1].getNeuronen();
+            deltas[i] = new double[currentLayer.length];
+            for (int j = 0; j < currentLayer.length; j++) {
+                Neuron neuron = currentLayer[j];
+                double sum = 0.0;
+                for (int k = 0; k < nextLayer.length; k++) {
+                    sum += nextLayer[k].getWeights()[j] * deltas[i + 1][k];
+                }
+                deltas[i][j] = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
+            }
+        }
+
+        // Update weights for output layer
+        int prevLayerIdx = L - 2;
+        for (int j = 0; j < outLayer.length; j++) {
+            Neuron n = outLayer[j];
+            double[] w = n.getWeights();
+            for (int i = 0; i < w.length; i++) {
+                double delta = deltas[last][j];
+                double newWeight = w[i] + (learningRate * getNeuron(prevLayerIdx, i).getOut() * delta);
+                n.setWeights(i, newWeight);
+            }
+        }
+
+        // Update weights for hidden layers (excluding input layer)
+        for (int layer = L - 2; layer > 0; layer--) {
+            Neuron[] layerNeurons = schichten[layer].getNeuronen();
+            for (int k = 0; k < layerNeurons.length; k++) {
+                Neuron n = layerNeurons[k];
+                double[] w = n.getWeights();
+                for (int i = 0; i < w.length; i++) {
+                    double newWeight = w[i] + (learningRate * getNeuron(layer - 1, i).getOut() * deltas[layer][k]);
+                    n.setWeights(i, newWeight);
+                }
+            }
+        }
+
+        // Update weights for input layer (layer 0 uses raw inputs)
         Neuron[] firstLayer = schichten[0].getNeuronen();
         for (int j = 0; j < firstLayer.length; j++) {
             Neuron n = firstLayer[j];
