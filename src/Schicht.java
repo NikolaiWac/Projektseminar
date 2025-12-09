@@ -1,3 +1,5 @@
+import java.util.stream.IntStream;
+
 public class Schicht {
     Neuron[] neuronen;
 
@@ -25,6 +27,15 @@ public class Schicht {
         for (int i = 0; i < neuronen.length; i++) {
             sum[i] = neuronen[i].outputFkt(input, bias);
         }
+        return sum;
+    }
+
+    // Parallele Variante für Multi-Core Nutzung
+    public double[] schichtSumParallel(double[] input, double bias) {
+        double[] sum = new double[neuronen.length];
+        IntStream.range(0, neuronen.length).parallel().forEach(i -> {
+            sum[i] = neuronen[i].outputFkt(input, bias);
+        });
         return sum;
     }
 }
