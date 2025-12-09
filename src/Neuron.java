@@ -45,9 +45,9 @@ public class Neuron {
     //Das ist wahrscheinlich temp bis wir mit dem eigentlichen
     //lernen anfangen
     public void asignrandomWeights() {
-        // Xavier/Glorot-style uniform initialization to avoid sigmoid saturation
-        // Initialize weights in [-limit, +limit], where limit = 1/sqrt(fan_in)
-        double limit = 1.0 / Math.sqrt(Math.max(1, inputNum));
+        // He initialization (optimal for ReLU): uniform in [-limit, +limit]
+        // with limit = sqrt(2.0 / fan_in)
+        double limit = Math.sqrt(2.0 / Math.max(1.0, (double) inputNum));
         for (int i = 0; i < inputNum; i++) {
             double r = (Math.random() * 2.0 - 1.0) * limit;
             weights[i] = r;

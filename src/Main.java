@@ -20,7 +20,7 @@ public class Main {
         try {
             // 1) Ensure MNIST data exists and load it
             String mnistDir = "mnist";
-            System.out.println("Preparing MNIST dataset (will download on first run)...");
+            System.out.println("Preparing MNIST dataset (will download if not found)...");
             MnistLoader.ensureMnistFiles(mnistDir);
             MnistLoader.MnistSet trainSet = MnistLoader.loadTraining(mnistDir);
             // Load MNIST test set for evaluation after training
@@ -31,13 +31,30 @@ public class Main {
             int inputSize = width * height; // 784
             int numClasses = 10;
 
-            // 2) Build network: input (784) -> hidden(128) -> output(10)
+            // 2) Build network: input (784) -> hidden(300) -> output(10)
             double[] inputRef = new double[inputSize]; // mutable buffer referenced by the net
-            Netz netz = new Netz(128, 10);
+            Netz netz = new Netz(300, 10);
             netz.init(inputRef);
             netz.setBias(1.0);
-            netz.setLearningRate(0.01);
-            setAllNeuronsActivationSigmoid(netz);
+            netz.setLearningRate(0.02);
+
+            // Set activations per layer:
+            // Hidden layer (index 0): ReLU (ID 3)
+            for (int pos = 0; ; pos++) {
+                try {
+                    netz.setNeuronFkt(0, pos, 3);
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    break;
+                }
+            }
+            // Output layer (index 1): Sigmoid (ID 2)
+            for (int pos = 0; ; pos++) {
+                try {
+                    netz.setNeuronFkt(1, pos, 2);
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    break;
+                }
+            }
 
             // 3) Prepare shuffled indices to iterate training samples
             int n = trainSet.images.length;
@@ -46,7 +63,7 @@ public class Main {
             Random rnd = new Random(1234);
 
             // 4) Train for a few epochs (adjust as needed)
-            int epochs = 2; // keep small for a quick start; increase for better accuracy
+            int epochs = 10; // keep small for a quick start; increase for better accuracy
             for (int epoch = 1; epoch <= epochs; epoch++) {
                 // shuffle
                 for (int i = n - 1; i > 0; i--) {
