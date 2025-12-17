@@ -10,6 +10,11 @@ import java.util.Random;
 
 public class Main {
 
+    // ANSI color codes for console output
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_RED = "\u001B[31m";
+    private static final String ANSI_GREEN = "\u001B[32m";
+
     public static void main(String[] args) {
         try {
             // 1) Ensure MNIST data exists and load it
@@ -108,12 +113,16 @@ public class Main {
                     testMse += squaredError(predVec, y);
                     if (pred == label) testCorrect++;
                     if (PRINT_TEST_DETAILS) {
-                        System.out.println(
+                        String line =
                                 "Test sample " + i +
                                 " | desired=" + label +
                                 " | predicted=" + pred +
-                                " | outputs=" + vectorToString(predVec)
-                        );
+                                " | outputs=" + vectorToString(predVec);
+                        if (pred == label) {
+                            System.out.println(ANSI_GREEN + line + ANSI_RESET);
+                        } else {
+                            System.out.println(ANSI_RED + line + ANSI_RESET);
+                        }
                     }
                 }
                 testMse /= tn;
