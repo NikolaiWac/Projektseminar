@@ -10,12 +10,6 @@ import java.util.Random;
 
 public class Main {
 
-    private static class Sample {
-        final double[] x;
-        final double[] y; // one-hot vector for 10 classes
-        Sample(double[] x, double[] y) { this.x = x; this.y = y; }
-    }
-
     public static void main(String[] args) {
         try {
             // 1) Ensure MNIST data exists and load it
@@ -37,6 +31,8 @@ public class Main {
             netz.init(inputRef);
             netz.setBias(1.0);
             netz.setLearningRate(0.02);
+            // Enable multi-core parallel computation
+            netz.setParallelEnabled(true);
 
             // Set activations per layer:
             // Hidden layer (index 0): ReLU (ID 3)
@@ -192,27 +188,6 @@ public class Main {
         double[] t = new double[classes];
         if (label >= 0 && label < classes) t[label] = 1.0;
         return t;
-    }
-
-    private static void setAllNeuronsActivationSigmoid(Netz netz) {
-        // Probe layers and neuron positions with safe bounds.
-        // Stop when a layer has no neurons (pos 0 fails).
-        for (int layer = 0; layer < 64; layer++) { // generous upper bound
-            boolean anyInLayer = false;
-            for (int pos = 0; pos < 1024; pos++) { // generous upper bound
-                try {
-                    netz.setNeuronFkt(layer, pos, 2); // any value other than 0/1 selects sigmoid
-                    anyInLayer = true;
-                } catch (ArrayIndexOutOfBoundsException ex) {
-                    // No more neurons in this layer
-                    break;
-                }
-            }
-            if (!anyInLayer) {
-                // No such layer
-                break;
-            }
-        }
     }
 
     private static boolean hasImageExtension(String name) {
