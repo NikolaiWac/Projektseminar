@@ -74,7 +74,9 @@ public class ActFuntions {
     }
 
     public static double sigmoidFunctionDerivation(double x) {
-        return sigmoidFunction(x) * (1 - sigmoidFunction(x));
+        // compute sigmoid once to avoid duplicate exp call
+        double s = sigmoidFunction(x);
+        return s * (1 - s);
     }
 
     // ReLU activation

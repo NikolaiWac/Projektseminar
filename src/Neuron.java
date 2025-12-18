@@ -48,24 +48,24 @@ public class Neuron {
         // He initialization (optimal for ReLU): uniform in [-limit, +limit]
         // with limit = sqrt(2.0 / fan_in)
         double limit = Math.sqrt(2.0 / Math.max(1.0, (double) inputNum));
+        java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
         for (int i = 0; i < inputNum; i++) {
-            double r = (Math.random() * 2.0 - 1.0) * limit;
-            weights[i] = r;
+            weights[i] = rnd.nextDouble(-limit, limit);
         }
         // Keep biasWeight at 0.0 (biases are not updated by current training code)
     }
 
     //Berechnet den Output des Knoten
     public double outputFkt(double[] input, double bias) {
-        double sum = 0;
-        //es wird in der Formel Bias gebraucht, keine Ahnung ob
-        //wir den schon jetz brauchen
-        for (int j = 0; j < input.length; j++) {
-            sum += input[j] * weights[j];
+        double[] w = this.weights;
+        double s = 0.0;
+        int len = input.length; // equals w.length
+        for (int j = 0; j < len; j++) {
+            s += input[j] * w[j];
         }
-        sum += bias * biasWeight;
-        in = sum;
-        out = ActFuntions.funkcionSelect(sum, aktFkt, furtherFktInfo);
+        s += bias * biasWeight;
+        in = s;
+        out = ActFuntions.funkcionSelect(s, aktFkt, furtherFktInfo);
         return out;
     }
 

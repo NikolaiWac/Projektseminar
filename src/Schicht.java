@@ -23,19 +23,32 @@ public class Schicht {
     //Berechnet die Summe aller Neuronen in der Schicht
     //Benötigt summe von vorheriger schicht aus Netz-Klasse
     public double[] schichtSum(double[] input, double bias) {
-        double[] sum = new double[neuronen.length];
-        for (int i = 0; i < neuronen.length; i++) {
-            sum[i] = neuronen[i].outputFkt(input, bias);
-        }
-        return sum;
+        double[] out = new double[neuronen.length];
+        computeInto(input, bias, out);
+        return out;
     }
 
     // Parallele Variante für Multi-Core Nutzung
     public double[] schichtSumParallel(double[] input, double bias) {
-        double[] sum = new double[neuronen.length];
-        IntStream.range(0, neuronen.length).parallel().forEach(i -> {
-            sum[i] = neuronen[i].outputFkt(input, bias);
+        double[] out = new double[neuronen.length];
+        computeIntoParallel(input, bias, out);
+        return out;
+    }
+
+    // Compute outputs into a provided preallocated array (sequential)
+    public void computeInto(double[] input, double bias, double[] out) {
+        // assume caller ensures out.length == neuronen.length
+        Neuron[] local = this.neuronen;
+        for (int i = 0; i < local.length; i++) {
+            out[i] = local[i].outputFkt(input, bias);
+        }
+    }
+
+    // Compute outputs into a provided preallocated array (parallel)
+    public void computeIntoParallel(double[] input, double bias, double[] out) {
+        Neuron[] local = this.neuronen;
+        IntStream.range(0, local.length).parallel().forEach(i -> {
+            out[i] = local[i].outputFkt(input, bias);
         });
-        return sum;
     }
 }

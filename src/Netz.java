@@ -10,6 +10,9 @@ public class Netz {
     private double learningRate = 1.0;
     private boolean parallelEnabled = false;
     private int[] neuronsPerLayer;
+    // Reusable buffers to avoid per-call allocations
+    private double[][] layerOutputs; // one array per layer (size = neurons in that layer)
+    private double[][] deltasReuse;  // same shape as layers for backprop
 
     public double getLearningRate() {
         return learningRate;
@@ -49,46 +52,62 @@ public class Netz {
             for (int i = 1; i < schichten.length; i++) {
                 schichten[i] = new Schicht(neuronsPerLayer[i], neuronsPerLayer[i - 1]);
             }
+            // allocate reusable outputs and deltas buffers
+            layerOutputs = new double[schichten.length][];
+            deltasReuse = new double[schichten.length][];
+            for (int i = 0; i < schichten.length; i++) {
+                int size = schichten[i].getNeuronen().length;
+                layerOutputs[i] = new double[size];
+                deltasReuse[i] = new double[size];
+            }
         }
     }
 
     // Durchläuft das Netzwerk: Input -> Eingaben als Liste
     // Output -> Ausgabe als Double
     public double forwardPass() {
-        double[] aktuelleEingabe = input.clone();
+        double[] prev = input; // read-only
         for (int i = 0; i < schichten.length; i++) {
-            aktuelleEingabe = parallelEnabled
-                    ? schichten[i].schichtSumParallel(aktuelleEingabe, bias)
-                    : schichten[i].schichtSum(aktuelleEingabe, bias);
+            double[] out = layerOutputs[i];
+            if (parallelEnabled) {
+                schichten[i].computeIntoParallel(prev, bias, out);
+            } else {
+                schichten[i].computeInto(prev, bias, out);
+            }
+            prev = out; // next layer reads from this
         }
         double sum = 0.0;
-        for (double v : aktuelleEingabe) sum += v;
+        for (double v : prev) sum += v;
         return sum;
     }
 
     // Forward pass that returns the full output vector of the last layer
     public double[] forwardPassVector() {
-        double[] aktuelleEingabe = input.clone();
+        double[] prev = input; // read-only
         for (int i = 0; i < schichten.length; i++) {
-            aktuelleEingabe = parallelEnabled
-                    ? schichten[i].schichtSumParallel(aktuelleEingabe, bias)
-                    : schichten[i].schichtSum(aktuelleEingabe, bias);
+            double[] out = layerOutputs[i];
+            if (parallelEnabled) {
+                schichten[i].computeIntoParallel(prev, bias, out);
+            } else {
+                schichten[i].computeInto(prev, bias, out);
+            }
+            prev = out;
         }
-        return aktuelleEingabe; // outputs of the last layer
+        return prev; // direct reference to the last layer's reusable buffer
     }
 
     public void backwardPass(double expectedValue) {
-        // Führt Forward Pass aus, um In/Out in Neuronen zu aktualisieren
+        // Note: this variant keeps an internal forward pass for compatibility with existing tests
         forwardPass();
 
         int L = schichten.length;
         // Deltas pro Schicht, gleiche Indizierung wie schichten
-        double[][] deltas = new double[L][];
+        double[][] deltas = this.deltasReuse;
 
         // Output-Layer Deltas
         int last = L - 1;
         Neuron[] outLayer = schichten[last].getNeuronen();
-        deltas[last] = new double[outLayer.length];
+        // ensure sized correctly (init did already); do not reallocate
         if (parallelEnabled) {
             IntStream.range(0, outLayer.length).parallel().forEach(j -> {
                 Neuron e = outLayer[j];
@@ -105,7 +124,7 @@ public class Netz {
         for (int i = L - 2; i >= 0; i--) {
             Neuron[] currentLayer = schichten[i].getNeuronen();
             Neuron[] nextLayer = schichten[i + 1].getNeuronen();
-            deltas[i] = new double[currentLayer.length];
+            // reuse preallocated buffer
             if (parallelEnabled) {
                 final int iLayer = i;
                 final Neuron[] nextLayerLocal = nextLayer;
@@ -206,16 +225,15 @@ public class Netz {
     // Backpropagation for vector outputs (e.g., multi-class). expected must have the same
     // length as the number of neurons in the output layer.
     public void backwardPassVector(double[] expected) {
-        // Run forward pass to ensure neuron in/out are up-to-date
-        forwardPass();
+        // Caller is expected to have executed a forward pass already (e.g., forwardPassVector)
 
         int L = schichten.length;
-        double[][] deltas = new double[L][];
+        double[][] deltas = this.deltasReuse;
 
         // Output layer deltas (per neuron target)
         int last = L - 1;
         Neuron[] outLayer = schichten[last].getNeuronen();
-        deltas[last] = new double[outLayer.length];
+        // reuse preallocated buffer
         if (parallelEnabled) {
             IntStream.range(0, outLayer.length).parallel().forEach(j -> {
                 Neuron e = outLayer[j];
@@ -234,7 +252,7 @@ public class Netz {
         for (int i = L - 2; i >= 0; i--) {
             Neuron[] currentLayer = schichten[i].getNeuronen();
             Neuron[] nextLayer = schichten[i + 1].getNeuronen();
-            deltas[i] = new double[currentLayer.length];
+            // reuse preallocated buffer
             if (parallelEnabled) {
                 final int iLayer = i;
                 final Neuron[] nextLayerLocal = nextLayer;
