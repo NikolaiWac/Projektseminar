@@ -8,7 +8,6 @@ public class Netz {
     // Hauptinput des Netzes
     private double[] input;
     private double learningRate = 1.0;
-    private boolean parallelEnabled = false;
     private int[] neuronsPerLayer;
     // Reusable buffers to avoid per-call allocations
     private double[][] layerOutputs; // one array per layer (size = neurons in that layer)
@@ -20,14 +19,6 @@ public class Netz {
 
     public void setLearningRate(double learningRate) {
         this.learningRate = learningRate;
-    }
-
-    public boolean isParallelEnabled() {
-        return parallelEnabled;
-    }
-
-    public void setParallelEnabled(boolean enabled) {
-        this.parallelEnabled = enabled;
     }
 
     // Konstruktor: Erstellt für jede übergebene Zahl eine Schicht außer für erste Schicht
@@ -69,11 +60,7 @@ public class Netz {
         double[] prev = input; // read-only
         for (int i = 0; i < schichten.length; i++) {
             double[] out = layerOutputs[i];
-            if (parallelEnabled) {
-                schichten[i].computeIntoParallel(prev, bias, out);
-            } else {
-                schichten[i].computeInto(prev, bias, out);
-            }
+            schichten[i].computeIntoParallel(prev, bias, out);
             prev = out; // next layer reads from this
         }
         double sum = 0.0;
@@ -86,11 +73,7 @@ public class Netz {
         double[] prev = input; // read-only
         for (int i = 0; i < schichten.length; i++) {
             double[] out = layerOutputs[i];
-            if (parallelEnabled) {
-                schichten[i].computeIntoParallel(prev, bias, out);
-            } else {
-                schichten[i].computeInto(prev, bias, out);
-            }
+            schichten[i].computeIntoParallel(prev, bias, out);
             prev = out;
         }
         return prev; // direct reference to the last layer's reusable buffer
@@ -108,118 +91,65 @@ public class Netz {
         int last = L - 1;
         Neuron[] outLayer = schichten[last].getNeuronen();
         // ensure sized correctly (init did already); do not reallocate
-        if (parallelEnabled) {
-            IntStream.range(0, outLayer.length).parallel().forEach(j -> {
-                Neuron e = outLayer[j];
-                deltas[last][j] = ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (expectedValue - e.getOut());
-            });
-        } else {
-            for (int j = 0; j < outLayer.length; j++) {
-                Neuron e = outLayer[j];
-                deltas[last][j] = ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (expectedValue - e.getOut());
-            }
-        }
+        IntStream.range(0, outLayer.length).parallel().forEach(j -> {
+            Neuron e = outLayer[j];
+            deltas[last][j] = ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (expectedValue - e.getOut());
+        });
 
         // Hidden-Layer Deltas rückwärts berechnen
         for (int i = L - 2; i >= 0; i--) {
             Neuron[] currentLayer = schichten[i].getNeuronen();
             Neuron[] nextLayer = schichten[i + 1].getNeuronen();
             // reuse preallocated buffer
-            if (parallelEnabled) {
-                final int iLayer = i;
-                final Neuron[] nextLayerLocal = nextLayer;
-                IntStream.range(0, currentLayer.length).parallel().forEach(j -> {
-                    Neuron neuron = currentLayer[j];
-                    double sum = 0.0;
-                    for (int k = 0; k < nextLayerLocal.length; k++) {
-                        sum += nextLayerLocal[k].getWeights()[j] * deltas[iLayer + 1][k];
-                    }
-                    deltas[iLayer][j] = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
-                });
-            } else {
-                for (int j = 0; j < currentLayer.length; j++) {
-                    Neuron neuron = currentLayer[j];
-                    double sum = 0.0;
-                    for (int k = 0; k < nextLayer.length; k++) {
-                        sum += nextLayer[k].getWeights()[j] * deltas[i + 1][k];
-                    }
-                    deltas[i][j] = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
+            final int iLayer = i;
+            final Neuron[] nextLayerLocal = nextLayer;
+            IntStream.range(0, currentLayer.length).parallel().forEach(j -> {
+                Neuron neuron = currentLayer[j];
+                double sum = 0.0;
+                for (int k = 0; k < nextLayerLocal.length; k++) {
+                    sum += nextLayerLocal[k].getWeights()[j] * deltas[iLayer + 1][k];
                 }
-            }
+                deltas[iLayer][j] = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
+            });
         }
 
         // Gewichte Output-Layer anpassen
         int prevLayerIdx = L - 2;
-        if (parallelEnabled) {
-            IntStream.range(0, outLayer.length).parallel().forEach(j -> {
-                Neuron n = outLayer[j];
-                double[] w = n.getWeights();
-                for (int i2 = 0; i2 < w.length; i2++) {
-                    double delta = deltas[last][j];
-                    double newWeight = w[i2] + (learningRate * getNeuron(prevLayerIdx, i2).getOut() * delta);
-                    n.setWeights(i2, newWeight);
-                }
-            });
-        } else {
-            for (int j = 0; j < outLayer.length; j++) {
-                Neuron n = outLayer[j];
-                double[] w = n.getWeights();
-                for (int i2 = 0; i2 < w.length; i2++) {
-                    double delta = deltas[last][j];
-                    double newWeight = w[i2] + (learningRate * getNeuron(prevLayerIdx, i2).getOut() * delta);
-                    n.setWeights(i2, newWeight);
-                }
+        IntStream.range(0, outLayer.length).parallel().forEach(j -> {
+            Neuron n = outLayer[j];
+            double[] w = n.getWeights();
+            for (int i2 = 0; i2 < w.length; i2++) {
+                double delta = deltas[last][j];
+                double newWeight = w[i2] + (learningRate * getNeuron(prevLayerIdx, i2).getOut() * delta);
+                n.setWeights(i2, newWeight);
             }
-        }
+        });
 
         // Gewichte Hidden-Layer anpassen (ohne Input-Layer)
         for (int layer = L - 2; layer > 0; layer--) {
             Neuron[] layerNeurons = schichten[layer].getNeuronen();
-            if (parallelEnabled) {
-                final int layerIdx = layer;
-                IntStream.range(0, layerNeurons.length).parallel().forEach(k -> {
-                    Neuron n = layerNeurons[k];
-                    double[] w = n.getWeights();
-                    for (int i2 = 0; i2 < w.length; i2++) {
-                        double newWeight = w[i2] + (learningRate * getNeuron(layerIdx - 1, i2).getOut() * deltas[layerIdx][k]);
-                        n.setWeights(i2, newWeight);
-                    }
-                });
-            } else {
-                for (int k = 0; k < layerNeurons.length; k++) {
-                    Neuron n = layerNeurons[k];
-                    double[] w = n.getWeights();
-                    for (int i2 = 0; i2 < w.length; i2++) {
-                        double newWeight = w[i2] + (learningRate * getNeuron(layer - 1, i2).getOut() * deltas[layer][k]);
-                        n.setWeights(i2, newWeight);
-                    }
+            final int layerIdx = layer;
+            IntStream.range(0, layerNeurons.length).parallel().forEach(k -> {
+                Neuron n = layerNeurons[k];
+                double[] w = n.getWeights();
+                for (int i2 = 0; i2 < w.length; i2++) {
+                    double newWeight = w[i2] + (learningRate * getNeuron(layerIdx - 1, i2).getOut() * deltas[layerIdx][k]);
+                    n.setWeights(i2, newWeight);
                 }
-            }
+            });
         }
 
         // Gewichte Input-Layer anpassen (Layer 0 nutzt direkt die Eingangswerte)
         Neuron[] firstLayer = schichten[0].getNeuronen();
-        if (parallelEnabled) {
-            IntStream.range(0, firstLayer.length).parallel().forEach(j -> {
-                Neuron n = firstLayer[j];
-                double[] w = n.getWeights();
-                for (int i2 = 0; i2 < w.length; i2++) {
-                    double delta = deltas[0][j];
-                    double newWeight = w[i2] + (learningRate * input[i2] * delta);
-                    n.setWeights(i2, newWeight);
-                }
-            });
-        } else {
-            for (int j = 0; j < firstLayer.length; j++) {
-                Neuron n = firstLayer[j];
-                double[] w = n.getWeights();
-                for (int i2 = 0; i2 < w.length; i2++) {
-                    double delta = deltas[0][j];
-                    double newWeight = w[i2] + (learningRate * input[i2] * delta);
-                    n.setWeights(i2, newWeight);
-                }
+        IntStream.range(0, firstLayer.length).parallel().forEach(j -> {
+            Neuron n = firstLayer[j];
+            double[] w = n.getWeights();
+            for (int i2 = 0; i2 < w.length; i2++) {
+                double delta = deltas[0][j];
+                double newWeight = w[i2] + (learningRate * input[i2] * delta);
+                n.setWeights(i2, newWeight);
             }
-        }
+        });
     }
 
     // Backpropagation for vector outputs (e.g., multi-class). expected must have the same
@@ -234,120 +164,66 @@ public class Netz {
         int last = L - 1;
         Neuron[] outLayer = schichten[last].getNeuronen();
         // reuse preallocated buffer
-        if (parallelEnabled) {
-            IntStream.range(0, outLayer.length).parallel().forEach(j -> {
-                Neuron e = outLayer[j];
-                double target = (expected != null && j < expected.length) ? expected[j] : 0.0;
-                deltas[last][j] = ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (target - e.getOut());
-            });
-        } else {
-            for (int j = 0; j < outLayer.length; j++) {
-                Neuron e = outLayer[j];
-                double target = (expected != null && j < expected.length) ? expected[j] : 0.0;
-                deltas[last][j] = ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (target - e.getOut());
-            }
-        }
+        IntStream.range(0, outLayer.length).parallel().forEach(j -> {
+            Neuron e = outLayer[j];
+            double target = (expected != null && j < expected.length) ? expected[j] : 0.0;
+            deltas[last][j] = ActFuntions.derivativeSelect(e.aktFkt, e.getIn()) * (target - e.getOut());
+        });
 
         // Hidden layers deltas (backwards)
         for (int i = L - 2; i >= 0; i--) {
             Neuron[] currentLayer = schichten[i].getNeuronen();
             Neuron[] nextLayer = schichten[i + 1].getNeuronen();
             // reuse preallocated buffer
-            if (parallelEnabled) {
-                final int iLayer = i;
-                final Neuron[] nextLayerLocal = nextLayer;
-                IntStream.range(0, currentLayer.length).parallel().forEach(j -> {
-                    Neuron neuron = currentLayer[j];
-                    double sum = 0.0;
-                    for (int k = 0; k < nextLayerLocal.length; k++) {
-                        sum += nextLayerLocal[k].getWeights()[j] * deltas[iLayer + 1][k];
-                    }
-                    deltas[iLayer][j] = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
-                });
-            } else {
-                for (int j = 0; j < currentLayer.length; j++) {
-                    Neuron neuron = currentLayer[j];
-                    double sum = 0.0;
-                    for (int k = 0; k < nextLayer.length; k++) {
-                        sum += nextLayer[k].getWeights()[j] * deltas[i + 1][k];
-                    }
-                    deltas[i][j] = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
+            final int iLayer = i;
+            final Neuron[] nextLayerLocal = nextLayer;
+            IntStream.range(0, currentLayer.length).parallel().forEach(j -> {
+                Neuron neuron = currentLayer[j];
+                double sum = 0.0;
+                for (int k = 0; k < nextLayerLocal.length; k++) {
+                    sum += nextLayerLocal[k].getWeights()[j] * deltas[iLayer + 1][k];
                 }
-            }
+                deltas[iLayer][j] = ActFuntions.derivativeSelect(neuron.aktFkt, neuron.getIn()) * sum;
+            });
         }
 
         // Update weights for output layer
         int prevLayerIdx = L - 2;
-        if (parallelEnabled) {
-            IntStream.range(0, outLayer.length).parallel().forEach(j -> {
-                Neuron n = outLayer[j];
-                double[] w = n.getWeights();
-                for (int i2 = 0; i2 < w.length; i2++) {
-                    double delta = deltas[last][j];
-                    double newWeight = w[i2] + (learningRate * getNeuron(prevLayerIdx, i2).getOut() * delta);
-                    n.setWeights(i2, newWeight);
-                }
-            });
-        } else {
-            for (int j = 0; j < outLayer.length; j++) {
-                Neuron n = outLayer[j];
-                double[] w = n.getWeights();
-                for (int i2 = 0; i2 < w.length; i2++) {
-                    double delta = deltas[last][j];
-                    double newWeight = w[i2] + (learningRate * getNeuron(prevLayerIdx, i2).getOut() * delta);
-                    n.setWeights(i2, newWeight);
-                }
+        IntStream.range(0, outLayer.length).parallel().forEach(j -> {
+            Neuron n = outLayer[j];
+            double[] w = n.getWeights();
+            for (int i2 = 0; i2 < w.length; i2++) {
+                double delta = deltas[last][j];
+                double newWeight = w[i2] + (learningRate * getNeuron(prevLayerIdx, i2).getOut() * delta);
+                n.setWeights(i2, newWeight);
             }
-        }
+        });
 
         // Update weights for hidden layers (excluding input layer)
         for (int layer = L - 2; layer > 0; layer--) {
             Neuron[] layerNeurons = schichten[layer].getNeuronen();
-            if (parallelEnabled) {
-                final int layerIdx = layer;
-                IntStream.range(0, layerNeurons.length).parallel().forEach(k -> {
-                    Neuron n = layerNeurons[k];
-                    double[] w = n.getWeights();
-                    for (int i2 = 0; i2 < w.length; i2++) {
-                        double newWeight = w[i2] + (learningRate * getNeuron(layerIdx - 1, i2).getOut() * deltas[layerIdx][k]);
-                        n.setWeights(i2, newWeight);
-                    }
-                });
-            } else {
-                for (int k = 0; k < layerNeurons.length; k++) {
-                    Neuron n = layerNeurons[k];
-                    double[] w = n.getWeights();
-                    for (int i2 = 0; i2 < w.length; i2++) {
-                        double newWeight = w[i2] + (learningRate * getNeuron(layer - 1, i2).getOut() * deltas[layer][k]);
-                        n.setWeights(i2, newWeight);
-                    }
+            final int layerIdx = layer;
+            IntStream.range(0, layerNeurons.length).parallel().forEach(k -> {
+                Neuron n = layerNeurons[k];
+                double[] w = n.getWeights();
+                for (int i2 = 0; i2 < w.length; i2++) {
+                    double newWeight = w[i2] + (learningRate * getNeuron(layerIdx - 1, i2).getOut() * deltas[layerIdx][k]);
+                    n.setWeights(i2, newWeight);
                 }
-            }
+            });
         }
 
         // Update weights for input layer (layer 0 uses raw inputs)
         Neuron[] firstLayer = schichten[0].getNeuronen();
-        if (parallelEnabled) {
-            IntStream.range(0, firstLayer.length).parallel().forEach(j -> {
-                Neuron n = firstLayer[j];
-                double[] w = n.getWeights();
-                for (int i2 = 0; i2 < w.length; i2++) {
-                    double delta = deltas[0][j];
-                    double newWeight = w[i2] + (learningRate * input[i2] * delta);
-                    n.setWeights(i2, newWeight);
-                }
-            });
-        } else {
-            for (int j = 0; j < firstLayer.length; j++) {
-                Neuron n = firstLayer[j];
-                double[] w = n.getWeights();
-                for (int i2 = 0; i2 < w.length; i2++) {
-                    double delta = deltas[0][j];
-                    double newWeight = w[i2] + (learningRate * input[i2] * delta);
-                    n.setWeights(i2, newWeight);
-                }
+        IntStream.range(0, firstLayer.length).parallel().forEach(j -> {
+            Neuron n = firstLayer[j];
+            double[] w = n.getWeights();
+            for (int i2 = 0; i2 < w.length; i2++) {
+                double delta = deltas[0][j];
+                double newWeight = w[i2] + (learningRate * input[i2] * delta);
+                n.setWeights(i2, newWeight);
             }
-        }
+        });
     }
 
     //setNeuron Funktionen aktuell ohne Fehlermeldungen

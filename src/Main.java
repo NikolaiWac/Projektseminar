@@ -36,8 +36,6 @@ public class Main {
             netz.init(inputRef);
             netz.setBias(1.0);
             netz.setLearningRate(0.02);
-            // Enable multi-core parallel computation
-            netz.setParallelEnabled(true);
 
             // Set activations per layer:
             // Hidden layer (index 0): ReLU (ID 3)
