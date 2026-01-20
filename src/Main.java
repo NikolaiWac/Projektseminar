@@ -129,46 +129,6 @@ public class Main {
                 double testAcc = (double) testCorrect / tn;
                 System.out.println("\nMNIST test set: MSE = " + testMse + " | Accuracy = " + String.format(Locale.ROOT, "%.2f%%", testAcc * 100));
             }
-
-            // 6) Optional: predict user's PNGs from the 'data' folder (if present).
-            // The app no longer requires a 'data' folder. If it's missing or empty, we simply skip this part.
-            File dataDir = new File("data");
-            if (dataDir.exists() && dataDir.isDirectory()) {
-                List<File> testPngs = new ArrayList<>();
-                try {
-                    Files.list(dataDir.toPath())
-                            .map(Path::toFile)
-                            .filter(File::isFile)
-                            .filter(f -> hasImageExtension(f.getName()))
-                            .sorted(Comparator.comparing(File::getName))
-                            .forEach(testPngs::add);
-                } catch (IOException e) {
-                    System.out.println("Skipping custom PNG predictions (failed to list 'data'): " + e.getMessage());
-                    testPngs = null;
-                }
-
-                if (testPngs != null && !testPngs.isEmpty()) {
-                    System.out.println("\nPredictions for images in data/ (resized to 28x28 if necessary):\n");
-                    for (File f : testPngs) {
-                        try {
-                            double[] flat = PNGArr.loadAndFlattenNormalized(f.getAbsolutePath(), width, height);
-                            System.arraycopy(flat, 0, inputRef, 0, inputSize);
-                            double[] out = netz.forwardPassVector();
-                            int pred = argmax(out);
-                            System.out.println(f.getName() + " -> predicted digit: " + pred + " | outputs: " + vectorToString(out));
-                        } catch (IOException e) {
-                            System.out.println("Skipping '" + f.getName() + "': " + e.getMessage());
-                        }
-                    }
-                } else if (testPngs != null) {
-                    System.out.println("No PNG images found in 'data'. Skipping custom predictions.");
-                }
-            } else {
-                // Silently skip to avoid requiring a 'data' folder
-                // Uncomment the next line if you prefer a notice:
-                // System.out.println("No 'data' folder detected. Skipping custom PNG predictions.");
-            }
-
         } catch (Exception e) {
             System.out.println("Unexpected error: " + e.getMessage());
         }
