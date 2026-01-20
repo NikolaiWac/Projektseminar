@@ -97,7 +97,7 @@ public class DigitDrawGUI extends JFrame {
         BufferedImage src = drawPanel.getImage();
         BufferedImage mnist28 = preprocessToMnist28(src);
 
-        // preview (scale up for display)
+
         Image previewScaled = mnist28.getScaledInstance(128, 128, Image.SCALE_FAST);
         previewLabel.setIcon(new ImageIcon(previewScaled));
 
@@ -115,7 +115,6 @@ public class DigitDrawGUI extends JFrame {
         outputsArea.setText(formatOutputs(out));
     }
 
-    // -------- Preprocessing (MNIST-like) --------
 
 
     public static BufferedImage preprocessToMnist28(BufferedImage src) {
@@ -138,12 +137,12 @@ public class DigitDrawGUI extends JFrame {
             }
         }
 
-        // If almost empty -> return black 28x28
+
         if (maxVal < 0.05f) {
             return blackImage(28, 28);
         }
 
-        // Bounding box of ink (threshold)
+
         float thr = 0.10f;
         int minX = w, minY = h, maxX = -1, maxY = -1;
         for (int y = 0; y < h; y++) {
@@ -161,8 +160,8 @@ public class DigitDrawGUI extends JFrame {
             return blackImage(28, 28);
         }
 
-        // Add padding around bbox
-        int pad = 12; // tuned for 320x320; helps keep strokes
+
+        int pad = 12;
         minX = Math.max(0, minX - pad);
         minY = Math.max(0, minY - pad);
         maxX = Math.min(w - 1, maxX + pad);
@@ -176,7 +175,7 @@ public class DigitDrawGUI extends JFrame {
         gc.drawImage(src, 0, 0, cropW, cropH, minX, minY, maxX + 1, maxY + 1, null);
         gc.dispose();
 
-        // Scale to fit into 20x20 (keep aspect ratio)
+
         int target = 20;
         double scale = Math.min((double) target / cropW, (double) target / cropH);
         int newW = Math.max(1, (int) Math.round(cropW * scale));
@@ -188,7 +187,7 @@ public class DigitDrawGUI extends JFrame {
         gs.drawImage(cropped, 0, 0, newW, newH, null);
         gs.dispose();
 
-        // Center into 28x28
+
         BufferedImage out = blackImage(28, 28);
         Graphics2D go = out.createGraphics();
         int offX = (28 - newW) / 2;
@@ -240,12 +239,12 @@ public class DigitDrawGUI extends JFrame {
 
     private static String formatOutputs(double[] out) {
         StringBuilder sb = new StringBuilder();
-        // show as lines "d: value"
+
         for (int i = 0; i < out.length; i++) {
             sb.append(i).append(": ").append(String.format(java.util.Locale.ROOT, "%.6f", out[i])).append("\n");
         }
 
-        // also show sorted top-3
+
         Integer[] idx = new Integer[out.length];
         for (int i = 0; i < out.length; i++) idx[i] = i;
         Arrays.sort(idx, (a, b) -> Double.compare(out[b], out[a]));
@@ -258,7 +257,7 @@ public class DigitDrawGUI extends JFrame {
         return sb.toString();
     }
 
-    // -------- Drawing panel --------
+
 
     private static class DrawPanel extends JPanel {
         private final BufferedImage img;

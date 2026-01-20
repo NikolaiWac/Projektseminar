@@ -25,7 +25,7 @@ public class GuiMain {
             netz.setLearningRate(0.02);
             netz.setParallelEnabled(true);
 
-            // Hidden layer: ReLU (ID 3)
+            // Hidden layer
             for (int pos = 0; ; pos++) {
                 try {
                     netz.setNeuronFkt(0, pos, 3);
